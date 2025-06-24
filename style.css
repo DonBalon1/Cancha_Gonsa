@@ -1,0 +1,17 @@
+body {
+    background-color: #1c1f2b;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  header h1 {
+    margin-bottom: 40px;
+  }
+  
+  canvas {
+    max-width: 600px;
+    margin: auto;
+  }
+  
