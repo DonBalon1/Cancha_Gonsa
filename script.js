@@ -1,95 +1,152 @@
 // URL del CSV publicado de Google Sheets
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQT1Nu2BTvja759foXvBs5Digg77UesBBgfpaUNVvNW92pQLckEE4Z_HZU5OmDVYvH6_MgeFqq6HRqz/pub?gid=1609934683&single=true&output=csv';
 
+// --- NUEVO: Selector de año global ---
+let anioSeleccionado = null;
+let aniosDisponibles = [];
+
+function filtrarPorAnio(dataRows, idxFecha, anio) {
+  // Filtra las filas por el año seleccionado
+  return dataRows.filter(cols => {
+    const fecha = cols[idxFecha];
+    if (!fecha) return false;
+    // Soporta formatos de fecha tipo '2025-06-01' o '01/06/2025'
+    let year = '';
+    if (fecha.includes('-')) year = fecha.split('-')[0];
+    else if (fecha.includes('/')) year = fecha.split('/').pop();
+    else year = fecha.substring(0, 4);
+    return year == anio;
+  });
+}
+
+function renderSelectorAnio(anios) {
+  let cont = document.getElementById('selectorAnioContainer');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'selectorAnioContainer';
+    cont.style.marginBottom = '1em';
+    const parent = document.querySelector('#tab-general');
+    if (parent) parent.prepend(cont);
+  }
+  cont.innerHTML = `<label for="selectorAnio"><b>Año:</b></label> <select id="selectorAnio"></select>`;
+  const sel = cont.querySelector('#selectorAnio');
+  sel.innerHTML = '';
+  anios.forEach(anio => {
+    const opt = document.createElement('option');
+    opt.value = anio;
+    opt.textContent = anio;
+    sel.appendChild(opt);
+  });
+  sel.value = anioSeleccionado || anios[0];
+  sel.onchange = function() {
+    anioSeleccionado = this.value;
+    filtrarYRenderizarPorAnio();
+  };
+}
+
+function filtrarYRenderizarPorAnio() {
+  // Usa los datos originales y el año seleccionado para filtrar y renderizar todo
+  const idxFecha = window.idxFecha;
+  const dataRows = window.dataRowsOriginal;
+  const anio = anioSeleccionado;
+  const dataFiltrada = filtrarPorAnio(dataRows, idxFecha, anio);
+  // Recalcular métricas
+  const idxJugador = window.idxJugador;
+  const idxPuntos = window.idxPuntos;
+  const idxGoles = window.idxGoles;
+  const fechasSet = new Set(dataFiltrada.map(cols => cols[idxFecha]));
+  const partidosTotales = fechasSet.size;
+  // Calcular métricas por jugador único
+  const metricasPorJugador = {};
+  const partidosPorFecha = {};
+  dataFiltrada.forEach(cols => {
+    const fecha = cols[idxFecha];
+    if (!partidosPorFecha[fecha]) partidosPorFecha[fecha] = [];
+    partidosPorFecha[fecha].push(cols);
+  });
+  Object.values(partidosPorFecha).forEach(partido => {
+    const ganadores = partido.filter(cols => Number(cols[idxPuntos]) === 3);
+    const perdedores = partido.filter(cols => Number(cols[idxPuntos]) === 0);
+    const golesGanadores = ganadores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+    const golesPerdedores = perdedores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+    const diferencia = golesGanadores - golesPerdedores;
+    ganadores.forEach(cols => {
+      const jugador = cols[idxJugador];
+      if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
+      metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) + diferencia;
+    });
+    perdedores.forEach(cols => {
+      const jugador = cols[idxJugador];
+      if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
+      metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) - diferencia;
+    });
+  });
+  dataFiltrada.forEach(cols => {
+    const jugador = cols[idxJugador];
+    const puntos = Number(cols[idxPuntos]);
+    const goles = Number(cols[idxGoles]);
+    if (jugador) {
+      if (!metricasPorJugador[jugador]) {
+        metricasPorJugador[jugador] = {
+          puntos: 0,
+          goles: 0,
+          partidos: 0,
+          ganados: 0,
+          empatados: 0,
+          perdidos: 0,
+          difGol: 0
+        };
+      }
+      if (!isNaN(puntos)) metricasPorJugador[jugador].puntos += puntos;
+      if (!isNaN(goles)) metricasPorJugador[jugador].goles += goles;
+      metricasPorJugador[jugador].partidos += 1;
+      if (puntos === 3) metricasPorJugador[jugador].ganados += 1;
+      else if (puntos === 1) metricasPorJugador[jugador].empatados += 1;
+      else if (puntos === 0) metricasPorJugador[jugador].perdidos += 1;
+    }
+  });
+  const ultimosResultados = getUltimosResultadosPorJugador(dataFiltrada, idxJugador, idxPuntos, 5);
+  const ultimosGoles = getUltimosGolesPorJugador(dataFiltrada, idxJugador, idxGoles, 5);
+  window.metricasPorJugador = metricasPorJugador;
+  window.partidosTotales = partidosTotales;
+  window.ultimosResultados = ultimosResultados;
+  window.ultimosGoles = ultimosGoles;
+  renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResultados, ultimosGoles);
+  renderTablaGoleadores(metricasPorJugador);
+  renderTribunalAsistencias(dataFiltrada, idxJugador, idxFecha);
+  renderHistorialPartidos(dataFiltrada, idxFecha, idxJugador, idxGoles, idxPuntos);
+  renderComparadorJugadores(metricasPorJugador);
+}
+
+// Modificar el fetch principal para detectar años y renderizar el selector
 fetch(csvUrl)
   .then(response => response.text())
   .then(csv => {
     const rows = csv.trim().split('\n');
     const headers = rows[0].split(',');
     const dataRows = rows.slice(1).map(row => row.split(','));
-
     // Calcular cantidad de fechas únicas (partidos totales)
     const idxFecha = headers.findIndex(h => h.trim().toLowerCase() === 'fecha');
-    const fechasSet = new Set(dataRows.map(cols => cols[idxFecha]));
-    const partidosTotales = fechasSet.size;
-
-    // Para la tabla completa
-    renderTable(headers, dataRows);
-
-    // Buscar los índices correctos de las columnas
-    const idxJugador = headers.findIndex(h => h.trim().toLowerCase() === 'jugador');
-    const idxPuntos = headers.findIndex(h => h.trim().toLowerCase() === 'puntos');
-    const idxGoles = headers.findIndex(h => h.trim().toLowerCase() === 'goles');
-
-    // Calcular métricas por jugador único
-    const metricasPorJugador = {};
-    // Agrupar filas por fecha
-    const partidosPorFecha = {};
+    // Detectar años disponibles
+    const aniosSet = new Set();
     dataRows.forEach(cols => {
       const fecha = cols[idxFecha];
-      if (!partidosPorFecha[fecha]) partidosPorFecha[fecha] = [];
-      partidosPorFecha[fecha].push(cols);
+      if (!fecha) return;
+      let year = '';
+      if (fecha.includes('-')) year = fecha.split('-')[0];
+      else if (fecha.includes('/')) year = fecha.split('/').pop();
+      else year = fecha.substring(0, 4);
+      aniosSet.add(year);
     });
-    // Calcular diferencia de gol por jugador
-    Object.values(partidosPorFecha).forEach(partido => {
-      // Separar ganadores y perdedores
-      const ganadores = partido.filter(cols => Number(cols[idxPuntos]) === 3);
-      const perdedores = partido.filter(cols => Number(cols[idxPuntos]) === 0);
-      // Sumar goles
-      const golesGanadores = ganadores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
-      const golesPerdedores = perdedores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
-      const diferencia = golesGanadores - golesPerdedores;
-      // Asignar diferencia a cada jugador
-      ganadores.forEach(cols => {
-        const jugador = cols[idxJugador];
-        if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
-        metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) + diferencia;
-      });
-      perdedores.forEach(cols => {
-        const jugador = cols[idxJugador];
-        if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
-        metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) - diferencia;
-      });
-      // Empatados no suman diferencia
-    });
-    // Calcular el resto de métricas
-    dataRows.forEach(cols => {
-      const jugador = cols[idxJugador];
-      const puntos = Number(cols[idxPuntos]);
-      const goles = Number(cols[idxGoles]);
-      if (jugador) {
-        if (!metricasPorJugador[jugador]) {
-          metricasPorJugador[jugador] = {
-            puntos: 0,
-            goles: 0,
-            partidos: 0,
-            ganados: 0,
-            empatados: 0,
-            perdidos: 0,
-            difGol: 0
-          };
-        }
-        if (!isNaN(puntos)) metricasPorJugador[jugador].puntos += puntos;
-        if (!isNaN(goles)) metricasPorJugador[jugador].goles += goles;
-        metricasPorJugador[jugador].partidos += 1;
-        // Contar ganados, empatados, perdidos
-        if (puntos === 3) metricasPorJugador[jugador].ganados += 1;
-        else if (puntos === 1) metricasPorJugador[jugador].empatados += 1;
-        else if (puntos === 0) metricasPorJugador[jugador].perdidos += 1;
-      }
-    });
-    // Calcular últimos 5 resultados de cada jugador
-    const ultimosResultados = getUltimosResultadosPorJugador(dataRows, idxJugador, idxPuntos, 5);
-    // Calcular últimos 5 goles de cada jugador
-    const ultimosGoles = getUltimosGolesPorJugador(dataRows, idxJugador, idxGoles, 5);
-    window.metricasPorJugador = metricasPorJugador;
-    window.partidosTotales = partidosTotales;
-    window.ultimosResultados = ultimosResultados;
-    window.ultimosGoles = ultimosGoles;
-    renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResultados, ultimosGoles);
-    renderTablaGoleadores(metricasPorJugador);
-    renderTribunalAsistencias(dataRows, idxJugador, idxFecha);
-    renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPuntos);
+    aniosDisponibles = Array.from(aniosSet).sort();
+    anioSeleccionado = aniosDisponibles[aniosDisponibles.length - 1]; // Por defecto el más reciente
+    window.dataRowsOriginal = dataRows;
+    window.idxFecha = idxFecha;
+    window.idxJugador = headers.findIndex(h => h.trim().toLowerCase() === 'jugador');
+    window.idxPuntos = headers.findIndex(h => h.trim().toLowerCase() === 'puntos');
+    window.idxGoles = headers.findIndex(h => h.trim().toLowerCase() === 'goles');
+    renderSelectorAnio(aniosDisponibles);
+    filtrarYRenderizarPorAnio();
   });
 
 function renderTable(headers, dataRows) {
@@ -160,15 +217,43 @@ function golesAColor(goles) {
   return `<span style="color:limegreen;font-size:1.2em;">● ${goles}</span>`;
 }
 
-let minPartidos = 1;
-let fechaSlicerIdx = null; // índice de la fecha máxima seleccionada
-let fechasOrdenadas = [];
+function calcularRanking(metricasPorJugador) {
+  // Devuelve un objeto: jugador -> posición (1, 2, ...)
+  const jugadoresOrdenados = Object.entries(metricasPorJugador)
+    .sort((a, b) => b[1].puntos - a[1].puntos);
+  let ranking = {};
+  let posicion = 1;
+  let prevPuntos = null;
+  let repeticiones = 0;
+  jugadoresOrdenados.forEach(([jugador, m], idx) => {
+    if (prevPuntos !== null && m.puntos === prevPuntos) {
+      repeticiones++;
+    } else {
+      if (idx !== 0) {
+        posicion++;
+      }
+      repeticiones = 1;
+    }
+    prevPuntos = m.puntos;
+    ranking[jugador] = posicion;
+  });
+  return ranking;
+}
+
+function tendenciaRanking(jugador, rankingActual, rankingAnterior) {
+  if (!rankingAnterior || !(jugador in rankingAnterior)) return '';
+  const actual = rankingActual[jugador];
+  const anterior = rankingAnterior[jugador];
+  if (actual < anterior) return '<span title="Subió" style="color:green;font-size:2em;">▲</span>';
+  if (actual > anterior) return '<span title="Bajó" style="color:red;font-size:2em;">▼</span>';
+  return '<span title="Igual" style="color:gray;font-size:2em;">—</span>';
+}
 
 function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResultados, ultimosGoles) {
   const tablaDiv = document.getElementById('tablaPuntosTotales');
-  let html = '<table><caption style="caption-side:top;font-size:1.3em;font-weight:bold;margin-bottom:8px;">Tabla general</caption><thead><tr><th>#</th><th>Jugador</th><th>Puntos Totales</th><th>Goles Totales</th><th>Dif. Gol</th><th>Partidos Jugados</th><th>Ganados</th><th>Empatados</th><th>Perdidos</th><th>% Victorias</th><th>% Presencias</th><th>Prom. Puntos</th><th>Prom. Goles</th><th>Rendimiento</th><th>Goleómetro</th></tr></thead><tbody>';
-  // Filtrar por partidos mínimos
-  const jugadoresFiltrados = Object.entries(metricasPorJugador).filter(([_, m]) => m.partidos >= minPartidos);
+  let html = '<table><caption style="caption-side:top;font-size:1.3em;font-weight:bold;margin-bottom:8px;">Tabla general</caption><thead><tr><th></th><th>#</th><th>Jugador</th><th>Puntos Totales</th><th>Goles Totales</th><th>Dif. Gol</th><th>Partidos Jugados</th><th>Ganados</th><th>Empatados</th><th>Perdidos</th><th>% Victorias</th><th>% Presencias</th><th>Prom. Puntos</th><th>Prom. Goles</th><th>Rendimiento</th><th>Goleómetro</th></tr></thead><tbody>';
+  // Eliminar filtro por partidos mínimos
+  const jugadoresFiltrados = Object.entries(metricasPorJugador); // Sin filtro
   // Ordenar por puntos totales de forma decreciente
   const jugadoresOrdenados = jugadoresFiltrados.sort((a, b) => b[1].puntos - a[1].puntos);
   let posicion = 1;
@@ -187,7 +272,7 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
     const promPuntos = m.partidos ? (m.puntos / m.partidos).toFixed(1) : '0.0';
     const promGoles = m.partidos ? (m.goles / m.partidos).toFixed(1) : '0.0';
     const porcentajeVictorias = m.partidos ? Math.round((m.ganados / m.partidos) * 100) + '%' : '0%';
-    const porcentajePresencias = window.fechasFiltradas ? Math.round((m.partidos / window.fechasFiltradas.length) * 100) + '%' : '0%';
+    const porcentajePresencias = partidosTotales ? Math.round((m.partidos / partidosTotales) * 100) + '%' : '0%';
     let rendimiento = '';
     if (ultimosResultados && ultimosResultados[jugador]) {
       rendimiento = ultimosResultados[jugador].map(resultadoAEmoji).join(' ');
@@ -196,7 +281,8 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
     if (ultimosGoles && ultimosGoles[jugador]) {
       goleometro = ultimosGoles[jugador].map(golesAColor).join(' ');
     }
-    html += `<tr><td>${posicion}</td><td>${jugador}</td><td>${m.puntos}</td><td>${m.goles}</td><td>${m.difGol || 0}</td><td>${m.partidos}</td><td>${m.ganados}</td><td>${m.empatados}</td><td>${m.perdidos}</td><td>${porcentajeVictorias}</td><td>${porcentajePresencias}</td><td>${promPuntos}</td><td>${promGoles}</td><td>${rendimiento}</td><td>${goleometro}</td></tr>`;
+    let tendencia = '';
+    html += `<tr><td style="text-align:center;">${tendencia}</td><td>${posicion}</td><td>${jugador}</td><td>${m.puntos}</td><td>${m.goles}</td><td>${m.difGol || 0}</td><td>${m.partidos}</td><td>${m.ganados}</td><td>${m.empatados}</td><td>${m.perdidos}</td><td>${porcentajeVictorias}</td><td>${porcentajePresencias}</td><td>${promPuntos}</td><td>${promGoles}</td><td>${rendimiento}</td><td>${goleometro}</td></tr>`;
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
@@ -361,207 +447,6 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
   // Cambiar detalle al seleccionar otra fecha
   selector.onchange = e => mostrarDetalle(e.target.value);
 }
-
-// Agregar evento al input de partidos mínimos
-window.addEventListener('DOMContentLoaded', () => {
-  const minPartidosInput = document.getElementById('minPartidosInput');
-  const minPartidosValue = document.getElementById('minPartidosValue');
-  const fechaSlicer = document.getElementById('fechaSlicer');
-  const fechaSlicerValue = document.getElementById('fechaSlicerValue');
-  if (minPartidosInput && minPartidosValue) {
-    if (window.partidosTotales) {
-      minPartidosInput.max = window.partidosTotales;
-    }
-    minPartidosInput.addEventListener('input', function() {
-      minPartidos = Number(this.value) || 1;
-      minPartidosValue.textContent = this.value;
-      // Usar el filtro de fecha si está activo
-      if (fechaSlicer && fechaSlicer.value && window.fechasOrdenadas) {
-        filtrarYRenderizarPorFecha();
-      } else if (window.metricasPorJugador && window.partidosTotales && window.ultimosResultados && window.ultimosGoles) {
-        renderPuntosTotales(window.metricasPorJugador, window.partidosTotales, window.ultimosResultados, window.ultimosGoles);
-      }
-    });
-    minPartidosValue.textContent = minPartidosInput.value;
-  }
-  if (fechaSlicer && fechaSlicerValue) {
-    // Esperar a que window.fechasOrdenadas esté disponible
-    const esperarFechas = setInterval(() => {
-      if (window.fechasOrdenadas && window.fechasOrdenadas.length > 0) {
-        fechaSlicer.max = window.fechasOrdenadas.length;
-        fechaSlicer.value = window.fechasOrdenadas.length;
-        fechaSlicerValue.textContent = window.fechasOrdenadas[window.fechasOrdenadas.length - 1] || '';
-        fechaSlicerIdx = window.fechasOrdenadas.length;
-        clearInterval(esperarFechas);
-      }
-    }, 100);
-    fechaSlicer.addEventListener('input', function() {
-      fechaSlicerIdx = Number(this.value);
-      fechaSlicerValue.textContent = window.fechasOrdenadas[fechaSlicerIdx - 1] || '';
-      filtrarYRenderizarPorFecha();
-    });
-  }
-});
-
-function filtrarYRenderizarPorFecha() {
-  // Filtrar dataRows hasta la fecha seleccionada
-  const idx = fechaSlicerIdx || window.fechasOrdenadas.length;
-  window.fechasFiltradas = window.fechasOrdenadas.slice(0, idx);
-  const dataFiltrada = window.dataRowsOriginal.filter(cols => window.fechasFiltradas.includes(cols[window.idxFecha]));
-  // Recalcular métricas
-  const metricasPorJugador = {};
-  const partidosPorFecha = {};
-  dataFiltrada.forEach(cols => {
-    const fecha = cols[window.idxFecha];
-    if (!partidosPorFecha[fecha]) partidosPorFecha[fecha] = [];
-    partidosPorFecha[fecha].push(cols);
-  });
-  Object.values(partidosPorFecha).forEach(partido => {
-    const ganadores = partido.filter(cols => Number(cols[window.idxPuntos]) === 3);
-    const perdedores = partido.filter(cols => Number(cols[window.idxPuntos]) === 0);
-    const golesGanadores = ganadores.reduce((acc, cols) => acc + Number(cols[window.idxGoles]), 0);
-    const golesPerdedores = perdedores.reduce((acc, cols) => acc + Number(cols[window.idxGoles]), 0);
-    const diferencia = golesGanadores - golesPerdedores;
-    ganadores.forEach(cols => {
-      const jugador = cols[window.idxJugador];
-      if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
-      metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) + diferencia;
-    });
-    perdedores.forEach(cols => {
-      const jugador = cols[window.idxJugador];
-      if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
-      metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) - diferencia;
-    });
-  });
-  dataFiltrada.forEach(cols => {
-    const jugador = cols[window.idxJugador];
-    const puntos = Number(cols[window.idxPuntos]);
-    const goles = Number(cols[window.idxGoles]);
-    if (jugador) {
-      if (!metricasPorJugador[jugador]) {
-        metricasPorJugador[jugador] = {
-          puntos: 0,
-          goles: 0,
-          partidos: 0,
-          ganados: 0,
-          empatados: 0,
-          perdidos: 0,
-          difGol: 0
-        };
-      }
-      if (!isNaN(puntos)) metricasPorJugador[jugador].puntos += puntos;
-      if (!isNaN(goles)) metricasPorJugador[jugador].goles += goles;
-      metricasPorJugador[jugador].partidos += 1;
-      if (puntos === 3) metricasPorJugador[jugador].ganados += 1;
-      else if (puntos === 1) metricasPorJugador[jugador].empatados += 1;
-      else if (puntos === 0) metricasPorJugador[jugador].perdidos += 1;
-    }
-  });
-  const ultimosResultados = getUltimosResultadosPorJugador(dataFiltrada, window.idxJugador, window.idxPuntos, 5);
-  const ultimosGoles = getUltimosGolesPorJugador(dataFiltrada, window.idxJugador, window.idxGoles, 5);
-  window.metricasPorJugador = metricasPorJugador;
-  window.partidosTotales = window.fechasFiltradas.length;
-  window.ultimosResultados = ultimosResultados;
-  window.ultimosGoles = ultimosGoles;
-  renderPuntosTotales(metricasPorJugador, window.partidosTotales, ultimosResultados, ultimosGoles);
-}
-
-// Guardar métricas globalmente para el filtro
-fetch(csvUrl)
-  .then(response => response.text())
-  .then(csv => {
-    const rows = csv.trim().split('\n');
-    const headers = rows[0].split(',');
-    const dataRows = rows.slice(1).map(row => row.split(','));
-
-    // Calcular cantidad de fechas únicas (partidos totales)
-    const idxFecha = headers.findIndex(h => h.trim().toLowerCase() === 'fecha');
-    const fechasSet = new Set(dataRows.map(cols => cols[idxFecha]));
-    const partidosTotales = fechasSet.size;
-
-    // Para la tabla completa
-    renderTable(headers, dataRows);
-
-    // Buscar los índices correctos de las columnas
-    const idxJugador = headers.findIndex(h => h.trim().toLowerCase() === 'jugador');
-    const idxPuntos = headers.findIndex(h => h.trim().toLowerCase() === 'puntos');
-    const idxGoles = headers.findIndex(h => h.trim().toLowerCase() === 'goles');
-
-    // Calcular métricas por jugador único
-    const metricasPorJugador = {};
-    // Agrupar filas por fecha
-    const partidosPorFecha = {};
-    dataRows.forEach(cols => {
-      const fecha = cols[idxFecha];
-      if (!partidosPorFecha[fecha]) partidosPorFecha[fecha] = [];
-      partidosPorFecha[fecha].push(cols);
-    });
-    // Calcular diferencia de gol por jugador
-    Object.values(partidosPorFecha).forEach(partido => {
-      // Separar ganadores y perdedores
-      const ganadores = partido.filter(cols => Number(cols[idxPuntos]) === 3);
-      const perdedores = partido.filter(cols => Number(cols[idxPuntos]) === 0);
-      // Sumar goles
-      const golesGanadores = ganadores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
-      const golesPerdedores = perdedores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
-      const diferencia = golesGanadores - golesPerdedores;
-      // Asignar diferencia a cada jugador
-      ganadores.forEach(cols => {
-        const jugador = cols[idxJugador];
-        if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
-        metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) + diferencia;
-      });
-      perdedores.forEach(cols => {
-        const jugador = cols[idxJugador];
-        if (!metricasPorJugador[jugador]) metricasPorJugador[jugador] = { puntos: 0, goles: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, difGol: 0 };
-        metricasPorJugador[jugador].difGol = (metricasPorJugador[jugador].difGol || 0) - diferencia;
-      });
-      // Empatados no suman diferencia
-    });
-    // Calcular el resto de métricas
-    dataRows.forEach(cols => {
-      const jugador = cols[idxJugador];
-      const puntos = Number(cols[idxPuntos]);
-      const goles = Number(cols[idxGoles]);
-      if (jugador) {
-        if (!metricasPorJugador[jugador]) {
-          metricasPorJugador[jugador] = {
-            puntos: 0,
-            goles: 0,
-            partidos: 0,
-            ganados: 0,
-            empatados: 0,
-            perdidos: 0,
-            difGol: 0
-          };
-        }
-        if (!isNaN(puntos)) metricasPorJugador[jugador].puntos += puntos;
-        if (!isNaN(goles)) metricasPorJugador[jugador].goles += goles;
-        metricasPorJugador[jugador].partidos += 1;
-        // Contar ganados, empatados, perdidos
-        if (puntos === 3) metricasPorJugador[jugador].ganados += 1;
-        else if (puntos === 1) metricasPorJugador[jugador].empatados += 1;
-        else if (puntos === 0) metricasPorJugador[jugador].perdidos += 1;
-      }
-    });
-    // Calcular últimos 5 resultados de cada jugador
-    const ultimosResultados = getUltimosResultadosPorJugador(dataRows, idxJugador, idxPuntos, 5);
-    // Calcular últimos 5 goles de cada jugador
-    const ultimosGoles = getUltimosGolesPorJugador(dataRows, idxJugador, idxGoles, 5);
-    window.dataRowsOriginal = dataRows;
-    window.idxFecha = idxFecha;
-    window.idxJugador = idxJugador;
-    window.idxPuntos = idxPuntos;
-    window.idxGoles = idxGoles;
-    fechasOrdenadas = Array.from(fechasSet).sort();
-    window.fechasOrdenadas = fechasOrdenadas;
-    window.fechasFiltradas = fechasOrdenadas;
-    renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResultados, ultimosGoles);
-    renderTablaGoleadores(metricasPorJugador);
-    renderTribunalAsistencias(dataRows, idxJugador, idxFecha);
-    renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPuntos);
-    renderComparadorJugadores(metricasPorJugador);
-  });
 
 // --- COMPARADOR DE JUGADORES ---
 function renderComparadorJugadores(metricasPorJugador) {

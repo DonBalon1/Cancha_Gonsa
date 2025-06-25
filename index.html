@@ -12,6 +12,9 @@
     <h1>🏆 Cancha Gonsa - Dashboard 2025</h1>
   </header>
 
+  <!-- Selector de año se inyecta por JS aquí, ahora arriba de los tabs -->
+  <div id="selectorAnioContainer" style="margin: 1em 0;"></div>
+
   <div class="tabs">
     <button class="tab-btn active" data-tab="general">Tabla General</button>
     <button class="tab-btn" data-tab="goleadores">Goleadores</button>
@@ -21,16 +24,6 @@
   </div>
 
   <section class="tabla tab-content" id="tab-general" style="display:block;">
-    <div style="margin-bottom: 1em;">
-      <label for="minPartidosInput">Partidos mínimos: </label>
-      <input type="range" id="minPartidosInput" value="1" min="1" max="20" style="vertical-align:middle;width:180px;">
-      <span id="minPartidosValue">1</span>
-    </div>
-    <div style="margin-bottom: 1em;">
-      <label for="fechaSlicer">Hasta fecha: </label>
-      <input type="range" id="fechaSlicer" min="1" value="1" style="vertical-align:middle;width:220px;">
-      <span id="fechaSlicerValue"></span>
-    </div>
     <div id="tablaPuntosTotales"></div>
   </section>
 
@@ -78,14 +71,6 @@
           sec.style.display = sec.id === 'tab-' + tab ? 'block' : 'none';
         });
       });
-    });
-
-    // Slider JS
-    const minPartidosInput = document.getElementById('minPartidosInput');
-    const minPartidosValue = document.getElementById('minPartidosValue');
-    minPartidosInput.addEventListener('input', function() {
-      minPartidosValue.textContent = this.value;
-      // Aquí puedes agregar la lógica para actualizar la tabla en base al valor del slider
     });
   </script>
 </body>
