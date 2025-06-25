@@ -3,11 +3,11 @@ body {
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
-    padding: 20px;
+    padding: 40px;
   }
   
   header h1 {
-    margin-bottom: 40px;
+    margin-bottom: 100px;
   }
   
   canvas {

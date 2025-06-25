@@ -12,10 +12,47 @@
     <h1>🏆 Cancha Gonsa - Dashboard 2025</h1>
   </header>
 
-  <section class="grafico">
-    <canvas id="graficoGoles"></canvas>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="general">Tabla General</button>
+    <button class="tab-btn" data-tab="goleadores">Goleadores</button>
+    <button class="tab-btn" data-tab="asistencias">Asistencias</button>
+    <button class="tab-btn" data-tab="historial">Historial</button>
+  </div>
+
+  <section class="tabla tab-content" id="tab-general" style="display:block;">
+    <div id="tablaPuntosTotales"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-goleadores" style="display:none;">
+    <h2>Tabla de Goleadores</h2>
+    <div id="tablaGoleadores"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-asistencias" style="display:none;">
+    <h2>Tribunal de Asistencias</h2>
+    <div id="tablaTribunalAsistencias"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-historial" style="display:none;">
+    <h2>Historial de Partidos</h2>
+    <label for="selectorPartido">Seleccioná una fecha:</label>
+    <select id="selectorPartido"></select>
+    <div id="detallePartido"></div>
   </section>
 
   <script src="script.js"></script>
+  <script>
+    // Tabs JS
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const tab = this.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(sec => {
+          sec.style.display = sec.id === 'tab-' + tab ? 'block' : 'none';
+        });
+      });
+    });
+  </script>
 </body>
 </html>
