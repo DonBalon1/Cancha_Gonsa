@@ -8,26 +8,22 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <!-- NAVBAR MODERNO Y RESPONSIVE -->
-  <nav class="navbar">
-    <div class="navbar-brand">
-      <span class="navbar-logo">⚽</span>
-      <span class="navbar-title">Cancha Gonsa</span>
-    </div>
-    <button class="navbar-toggle" id="navbarToggle" aria-label="Abrir menú">
-      <span></span><span></span><span></span>
-    </button>
-    <ul class="navbar-links" id="navbarLinks">
-      <li><a href="#tab-general" class="tab-btn active" data-tab="general">Tabla General</a></li>
-      <li><a href="#tab-goleadores" class="tab-btn" data-tab="goleadores">Goleadores</a></li>
-      <li><a href="#tab-asistencias" class="tab-btn" data-tab="asistencias">Asistencias</a></li>
-      <li><a href="#tab-historial" class="tab-btn" data-tab="historial">Historial</a></li>
-      <li><a href="#tab-comparador" class="tab-btn" data-tab="comparador">Comparador</a></li>
-    </ul>
-  </nav>
+  <header>
+    <h1>🏆 Cancha Gonsa - Dashboard 2025</h1>
+  </header>
 
   <!-- Selector de año se inyecta por JS aquí, ahora arriba de los tabs -->
   <div id="selectorAnioContainer" style="margin: 1em 0;"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="general">Tabla General</button>
+    <button class="tab-btn" data-tab="goleadores">Goleadores</button>
+    <button class="tab-btn" data-tab="asistencias">Asistencias</button>
+    <button class="tab-btn" data-tab="historial">Historial</button>
+    <button class="tab-btn" data-tab="comparador">Comparador</button>
+    <!-- Eliminar la pestaña del generador de equipos -->
+    <!-- <button class="tab-btn" data-tab="generador-equipos">Generador de Equipos</button> -->
+  </div>
 
   <section class="tabla tab-content" id="tab-general" style="display:block;">
     <div id="tablaPuntosTotales"></div>
@@ -62,27 +58,34 @@
         <select id="comparadorJugador2"></select>
       </div>
     </div>
-    <div id="comparadorEstadisticas"></div>
+    <div id="comparadorEstadisticas" style="margin-top:2em;"></div>
   </section>
+
+  <!-- Eliminar la sección del generador de equipos -->
+  <!--
+  <section class="tabla tab-content" id="tab-generador-equipos" style="display:none;">
+    <h2>Generador de Equipos</h2>
+    <div id="generadorEquiposForm">
+      <label for="jugadoresSeleccionados"><b>Seleccioná 12 jugadores:</b></label><br>
+      <select id="jugadoresSeleccionados" multiple size="12" style="width:220px;margin-bottom:1em;"></select><br>
+      <button id="btnGenerarEquipos">Generar equipos balanceados</button>
+    </div>
+    <div id="resultadoEquipos" style="margin-top:2em;"></div>
+  </section>
+  -->
 
   <script src="script.js"></script>
   <script>
-    // Navbar toggle para móvil
-    document.getElementById('navbarToggle').onclick = function() {
-      document.getElementById('navbarLinks').classList.toggle('open');
-      this.classList.toggle('open');
-    };
-    // Tabs con navbar
-    document.querySelectorAll('.navbar-links a.tab-btn').forEach(btn => {
-      btn.onclick = function(e) {
-        e.preventDefault();
-        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
-        document.querySelectorAll('.navbar-links a.tab-btn').forEach(b => b.classList.remove('active'));
+    // Tabs JS
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
-        const tabId = this.getAttribute('href');
-        document.querySelector(tabId).style.display = 'block';
-        window.scrollTo({top:0,behavior:'smooth'});
-      };
+        const tab = this.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(sec => {
+          sec.style.display = sec.id === 'tab-' + tab ? 'block' : 'none';
+        });
+      });
     });
   </script>
 </body>

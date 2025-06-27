@@ -213,10 +213,10 @@ function getUltimosResultadosPorJugador(dataRows, idxJugador, idxPuntos, cantida
 }
 
 function resultadoAEmoji(resultado) {
-  // Devuelve un span con círculo minimalista y color según el resultado
-  if (resultado === 'G') return '<span class="dot dot-green"></span>';
-  if (resultado === 'E') return '<span class="dot dot-yellow"></span>';
-  if (resultado === 'P') return '<span class="dot dot-red"></span>';
+  // Devuelve un span con emoji y color según el resultado
+  if (resultado === 'G') return '<span style="color:green;font-size:1.2em;">🟢</span>';
+  if (resultado === 'E') return '<span style="color:orange;font-size:1.2em;">🟡</span>';
+  if (resultado === 'P') return '<span style="color:red;font-size:1.2em;">🔴</span>';
   return '';
 }
 
@@ -238,11 +238,10 @@ function getUltimosGolesPorJugador(dataRows, idxJugador, idxGoles, cantidad = 5)
 }
 
 function golesAColor(goles) {
-  // Devuelve un span con círculo y número minimalista según la cantidad de goles
-  if (goles === 0) return '<span class="dot dot-red"></span><span class="dot-num">0</span>';
-  if (goles === 1) return '<span class="dot dot-yellow"></span><span class="dot-num">1</span>';
-  if (goles >= 2) return `<span class="dot dot-green"></span><span class="dot-num">${goles}</span>`;
-  return '';
+  // Devuelve un span con el número y color según la cantidad de goles
+  if (goles === 0) return '<span style="color:red;font-size:1.2em;">● 0</span>';
+  if (goles === 1) return '<span style="color:gold;font-size:1.2em;">● 1</span>';
+  return `<span style="color:limegreen;font-size:1.2em;">● ${goles}</span>`;
 }
 
 function calcularRanking(metricasPorJugador) {
@@ -339,16 +338,10 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
       goleometro = ultimosGoles[jugador].map(golesAColor).join(' ');
     }
     let tendencia = '';
-    let claseTop = '';
-    if (posicion === 1) claseTop = 'top1';
-    else if (posicion === 2) claseTop = 'top2';
-    else if (posicion === 3) claseTop = 'top3';
-    const rowDelay = (idx * 0.04).toFixed(2);
-    html += `<tr style="--row-delay:${rowDelay}s"><td style="text-align:center;">${tendencia}</td><td class="${claseTop}">${posicion}</td><td>${jugador}</td><td>${m.puntos}</td><td>${m.goles}</td><td>${m.difGol || 0}</td><td>${m.partidos}</td><td>${m.ganados}</td><td>${m.empatados}</td><td>${m.perdidos}</td><td>${porcentajeVictorias}</td><td>${porcentajePresencias}</td><td>${promPuntos}</td><td>${promGoles}</td><td>${rendimiento}</td><td>${goleometro}</td></tr>`;
+    html += `<tr><td style="text-align:center;">${tendencia}</td><td>${posicion}</td><td>${jugador}</td><td>${m.puntos}</td><td>${m.goles}</td><td>${m.difGol || 0}</td><td>${m.partidos}</td><td>${m.ganados}</td><td>${m.empatados}</td><td>${m.perdidos}</td><td>${porcentajeVictorias}</td><td>${porcentajePresencias}</td><td>${promPuntos}</td><td>${promGoles}</td><td>${rendimiento}</td><td>${goleometro}</td></tr>`;
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
-  agregarBotonModoTabla(tablaDiv);
 }
 
 function contarVecesGoleadorDelPartido(jugador, dataRows, idxFecha, idxJugador, idxGoles) {
@@ -430,16 +423,10 @@ function renderTablaGoleadores(metricasPorJugador) {
     prevGoles = m.goles;
     const golesPorPartido = m.partidos ? (m.goles / m.partidos).toFixed(1) : '0.0';
     const vecesGoleador = contarVecesGoleadorDelPartido(jugador, dataRows, idxFecha, idxJugador, idxGoles);
-    const rowDelay = (idx * 0.04).toFixed(2);
-    let claseTop = '';
-    if (posicion === 1) claseTop = 'top1';
-    else if (posicion === 2) claseTop = 'top2';
-    else if (posicion === 3) claseTop = 'top3';
-    html += `<tr style="--row-delay:${rowDelay}s"><td class="${claseTop}">${posicion}</td><td>${jugador}</td><td>${m.partidos}</td><td>${golesPorPartido}</td><td>${m.difGol || 0}</td><td>${vecesGoleador}</td><td>${m.goles}</td></tr>`;
+    html += `<tr><td>${posicion}</td><td>${jugador}</td><td>${m.partidos}</td><td>${golesPorPartido}</td><td>${m.difGol || 0}</td><td>${vecesGoleador}</td><td>${m.goles}</td></tr>`;
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
-  agregarBotonModoTabla(tablaDiv);
 }
 
 function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
@@ -477,7 +464,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   // Renderizar la tabla con encabezado de fechas
   let html = '<table><caption style="caption-side:top;font-size:1.2em;font-weight:bold;margin-bottom:8px;">Tribunal de Asistencias</caption>';
   html += '<thead>';
-  html += '<tr><th rowspan="2">Jugador</th><th rowspan="2" style="text-align:center;">#</th><th rowspan="2">% Presencias</th>';
+  html += '<tr><th rowspan="2">Jugador</th><th rowspan="2">#</th><th rowspan="2">% Presencias</th>';
   html += `<th colspan="${fechas.length}">Historial de Presencias</th></tr>`;
   // Fila de fechas
   html += '<tr>';
@@ -487,38 +474,20 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   });
   html += '</tr>';
   html += '</thead><tbody>';
-  let posicion = 1;
-  let prevPorc = null;
-  let repeticiones = 0;
-  jugadoresConAsistencias.forEach(({ jugador, asistencias, total, porcentaje }, idx) => {
-    if (prevPorc !== null && porcentaje === prevPorc) {
-      repeticiones++;
-    } else {
-      if (idx !== 0) {
-        posicion++;
-      }
-      repeticiones = 1;
-    }
-    prevPorc = porcentaje;
+  jugadoresConAsistencias.forEach(({ jugador, asistencias, total, porcentaje }) => {
     const porcentajeStr = total > 0 ? Math.round(porcentaje * 100) + '%' : '0%';
-    const rowDelay = (idx * 0.04).toFixed(2);
-    let claseTop = '';
-    if (posicion === 1) claseTop = 'top1';
-    else if (posicion === 2) claseTop = 'top2';
-    else if (posicion === 3) claseTop = 'top3';
-    html += `<tr style="--row-delay:${rowDelay}s"><td>${jugador}</td><td class="${claseTop}">${asistencias} de ${total}</td><td>${porcentajeStr}</td>`;
+    html += `<tr><td>${jugador}</td><td>${asistencias} de ${total}</td><td>${porcentajeStr}</td>`;
     fechas.forEach(fecha => {
       if (presenciasPorJugador[jugador].has(fecha)) {
-        html += '<td style="text-align:center;">🟢</td>';
+        html += '<td style="text-align:center;"><span style="color:green;font-size:1.2em;">🟢</span></td>';
       } else {
-        html += '<td style="text-align:center;">🔴</td>';
+        html += '<td style="text-align:center;"><span style="color:red;font-size:1.2em;">🔴</span></td>';
       }
     });
     html += '</tr>';
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
-  agregarBotonModoTabla(tablaDiv);
 }
 
 function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPuntos) {
@@ -915,30 +884,3 @@ filtrarYRenderizarPorAnio = function() {
 window.addEventListener('DOMContentLoaded', () => {
   renderFiltroFechaTablaGeneral();
 });
-
-function agregarBotonModoTabla(tablaDiv) {
-  if (!tablaDiv) return;
-  let btn = tablaDiv.parentNode.querySelector('.btn-modo-tabla');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.className = 'btn-modo-tabla';
-    btn.textContent = 'Modo compacto';
-    btn.style.marginBottom = '0.7em';
-    btn.style.marginRight = '0.7em';
-    btn.style.background = '#23263a';
-    btn.style.color = '#ffd700';
-    btn.style.border = '1.5px solid #27304a';
-    btn.style.borderRadius = '7px';
-    btn.style.padding = '0.3em 0.9em';
-    btn.style.fontWeight = '600';
-    btn.style.cursor = 'pointer';
-    btn.onclick = function() {
-      const tablaCont = tablaDiv.closest('.tabla');
-      if (tablaCont) {
-        tablaCont.classList.toggle('compact');
-        btn.textContent = tablaCont.classList.contains('compact') ? 'Modo expandido' : 'Modo compacto';
-      }
-    };
-    tablaDiv.parentNode.insertBefore(btn, tablaDiv);
-  }
-}
