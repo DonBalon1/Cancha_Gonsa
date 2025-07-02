@@ -293,14 +293,6 @@ function claseDifGol(valor) {
   return 'pct-verde';
 }
 
-// --- FUNCION AUXILIAR PARA CLASE DE COLOR SEGÚN GxP ---
-function claseGxP(valor) {
-  if (valor < 0.5) return 'pct-rojo';
-  if (valor < 1) return 'pct-amarillo';
-  if (valor < 1.5) return 'pct-verde-claro';
-  return 'pct-verde';
-}
-
 function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResultados, ultimosGoles) {
   // Contenedor principal
   const tablaDiv = document.getElementById('tablaPuntosTotales');
@@ -319,7 +311,13 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   }
 
   // Título principal
-  // Título eliminado para evitar duplicado visual, ya está en el HTML principal
+  let titulo = document.getElementById('tituloTablaGeneral');
+  if (!titulo) {
+    titulo = document.createElement('div');
+    titulo.id = 'tituloTablaGeneral';
+    titulo.innerHTML = '<h2 style="color:#ffd700;text-align:center;margin-bottom:0.5em;">Tabla general</h2>';
+    contenedorSuperior.appendChild(titulo);
+  }
 
   // Filtro de partidos mínimos (centrado debajo del título)
   let filtroDiv = document.getElementById('filtroPartidosMinimos');
@@ -379,7 +377,7 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   }
 
   // --- Renderizar la tabla (sin caption) ---
-  let html = `<table><thead><tr><th>#</th><th>Jugador</th><th class='puntos'>Puntos</th><th class='col-g'>G</th><th class='col-e'>E</th><th class='col-p'>P</th><th>PJ</th><th>Goles</th><th>Dif. Gol</th><th>% Victorias</th><th>% Presencias</th><th>PxP</th><th>GxP</th><th>Rendimiento</th><th>Goleómetro</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>#</th><th>Jugador</th><th>Puntos</th><th class='col-g'>G</th><th class='col-e'>E</th><th class='col-p'>P</th><th>PJ</th><th>Goles</th><th>Dif. Gol</th><th>% Victorias</th><th>% Presencias</th><th>PxP</th><th>GxP</th><th>Rendimiento</th><th>Goleómetro</th></tr></thead><tbody>`;
   // Filtrar por partidos mínimos
   const jugadoresFiltrados = Object.entries(metricasPorJugador).filter(([_, m]) => m.partidos >= partidosMinimos);
   // Ordenar por puntos totales de forma decreciente
@@ -418,7 +416,7 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
     else if (posicion === 2) claseTop = 'top2';
     else if (posicion === 3) claseTop = 'top3';
     const rowDelay = (idx * 0.04).toFixed(2);
-    html += `<tr style=\"--row-delay:${rowDelay}s\"><td class=\"${claseTop}\">${posicion}</td><td>${jugador}</td><td class='puntos'>${m.puntos}</td><td class='col-g'>${m.ganados}</td><td class='col-e'>${m.empatados}</td><td class='col-p'>${m.perdidos}</td><td>${m.partidos}</td><td>${m.goles}</td><td class='${claseDifGol(Number(m.difGol||0))}'>${m.difGol || 0}</td><td class='${clasePorcentaje(Number(porcentajeVictorias.replace('%','')))}'>${porcentajeVictorias}</td><td class='${clasePorcentaje(Number(porcentajePresencias.replace('%','')))}'>${porcentajePresencias}</td><td>${promPuntos}</td><td>${promGoles}</td><td>${rendimiento}</td><td>${goleometro}</td></tr>`;
+    html += `<tr style=\"--row-delay:${rowDelay}s\"><td class=\"${claseTop}\">${posicion}</td><td>${jugador}</td><td>${m.puntos}</td><td class='col-g'>${m.ganados}</td><td class='col-e'>${m.empatados}</td><td class='col-p'>${m.perdidos}</td><td>${m.partidos}</td><td>${m.goles}</td><td class='${claseDifGol(Number(m.difGol||0))}'>${m.difGol || 0}</td><td class='${clasePorcentaje(Number(porcentajeVictorias.replace('%','')))}'>${porcentajeVictorias}</td><td class='${clasePorcentaje(Number(porcentajePresencias.replace('%','')))}'>${porcentajePresencias}</td><td>${promPuntos}</td><td>${promGoles}</td><td>${rendimiento}</td><td>${goleometro}</td></tr>`;
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
@@ -488,40 +486,15 @@ function contarVecesGoleadorDelPartido(jugador, dataRows, idxFecha, idxJugador, 
 function renderTablaGoleadores(metricasPorJugador) {
   const tablaDiv = document.getElementById('tablaGoleadores');
   if (!tablaDiv) return;
-
-  // Crear o seleccionar el contenedor superior (igual que en Tabla General)
-  let contenedorSuperior = document.getElementById('contenedorSuperiorTablaGoleadores');
-  if (!contenedorSuperior) {
-    contenedorSuperior = document.createElement('div');
-    contenedorSuperior.id = 'contenedorSuperiorTablaGoleadores';
-    contenedorSuperior.style.display = 'flex';
-    contenedorSuperior.style.flexDirection = 'column';
-    contenedorSuperior.style.alignItems = 'center';
-    contenedorSuperior.style.marginBottom = '1em';
-    tablaDiv.parentNode.insertBefore(contenedorSuperior, tablaDiv);
-  }
-
-  // --- Eliminado el título duplicado de la tabla de goleadores ---
-  // let titulo = document.getElementById('tituloTablaGoleadores');
-  // if (!titulo) {
-  //   titulo = document.createElement('div');
-  //   titulo.id = 'tituloTablaGoleadores';
-  //   titulo.innerHTML = '<h2 style="color:#ffd700;text-align:center;margin-bottom:0.5em;">Tabla de Goleadores</h2>';
-  //   contenedorSuperior.appendChild(titulo);
-  // }
-
-  // Filtro de partidos mínimos (centrado debajo del título)
+  // Agregar filtro de partidos mínimos si no existe
   let filtroDiv = document.getElementById('filtroPartidosMinimosGoleadores');
   if (!filtroDiv) {
     filtroDiv = document.createElement('div');
     filtroDiv.id = 'filtroPartidosMinimosGoleadores';
-    filtroDiv.style.display = 'flex';
-    filtroDiv.style.justifyContent = 'center';
-    filtroDiv.style.alignItems = 'center';
-    filtroDiv.style.margin = '0 0 1em 0';
-    contenedorSuperior.appendChild(filtroDiv);
-  } else {
-    filtroDiv.style.alignItems = 'center';
+    filtroDiv.style.marginBottom = '1em';
+    if (tablaDiv.parentNode) {
+      tablaDiv.parentNode.insertBefore(filtroDiv, tablaDiv);
+    }
   }
   // Mantener el valor del input entre renderizados
   let partidosMinimos = 0;
@@ -532,8 +505,8 @@ function renderTablaGoleadores(metricasPorJugador) {
     partidosMinimos = 0;
   }
   filtroDiv.innerHTML = `
-    <label for="inputPartidosMinimosGoleadores" style="font-size:1.15em;"><b>Partidos mínimos jugados:</b></label>
-    <input type="number" id="inputPartidosMinimosGoleadores" min="0" value="${partidosMinimos}" style="width:60px;margin-left:0.5em;height:2.1em;font-size:1.15em;text-align:center;vertical-align:middle;">
+    <label for="inputPartidosMinimosGoleadores"><b>Partidos mínimos jugados:</b></label>
+    <input type="number" id="inputPartidosMinimosGoleadores" min="0" value="${partidosMinimos}" style="width:60px;">
   `;
   const inputMin = filtroDiv.querySelector('#inputPartidosMinimosGoleadores');
   inputMin.value = partidosMinimos;
@@ -541,40 +514,13 @@ function renderTablaGoleadores(metricasPorJugador) {
     renderTablaGoleadores(metricasPorJugador);
   };
 
-  // Botón de modo compacto (a la izquierda, antes de la tabla)
-  let btn = tablaDiv.parentNode.querySelector('.btn-modo-tabla-goleadores');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.className = 'btn-modo-tabla-goleadores';
-    btn.textContent = 'Modo compacto';
-    btn.style.marginBottom = '0.7em';
-    btn.style.marginRight = '0.7em';
-    btn.style.background = '#23263a';
-    btn.style.color = '#ffd700';
-    btn.style.border = '1.5px solid #27304a';
-    btn.style.borderRadius = '7px';
-    btn.style.padding = '0.3em 0.9em';
-    btn.style.fontWeight = '600';
-    btn.style.cursor = 'pointer';
-    btn.style.alignSelf = 'flex-start';
-    btn.onclick = function() {
-      const tablaCont = tablaDiv.closest('.tabla');
-      if (tablaCont) {
-        tablaCont.classList.toggle('compact');
-        btn.textContent = tablaCont.classList.contains('compact') ? 'Modo expandido' : 'Modo compacto';
-      }
-    };
-    tablaDiv.parentNode.insertBefore(btn, tablaDiv);
-  }
-
   // Obtener índices y dataRows para el cálculo
   const dataRows = window.dataFiltradaPorAnio || window.dataRowsOriginal;
   const idxFecha = window.idxFecha;
   const idxJugador = window.idxJugador;
   const idxGoles = window.idxGoles;
 
-  // Encabezados simplificados, columna Goles con clase especial
-  let html = '<table><thead><tr><th>#</th><th>Jugador</th><th class="col-goles">Goles</th><th>PJ</th><th>Veces goleador</th><th>GxP</th><th>Dif. Gol</th><th>Efect. Gol</th></tr></thead><tbody>';
+  let html = '<table><caption style="caption-side:top;font-size:1.2em;font-weight:bold;margin-bottom:8px;">Tabla de Goleadores</caption><thead><tr><th>#</th><th>Jugador</th><th>Partidos Jugados</th><th>Goles por Partido</th><th>Diferencia de Gol</th><th>Veces Goleador del Partido</th><th>Goles Totales</th></tr></thead><tbody>';
   // Filtrar por partidos mínimos
   const jugadoresFiltrados = Object.entries(metricasPorJugador).filter(([_, m]) => m.partidos >= partidosMinimos);
   // Ordenar por goles totales de forma decreciente
@@ -582,12 +528,12 @@ function renderTablaGoleadores(metricasPorJugador) {
   let posicion = 1;
   let prevGoles = null;
   let repeticiones = 0;
-  // Calcular máximo de goles para la barra
-  const maxGoles = Math.max(...jugadoresOrdenados.map(([_, m]) => m.goles));
   jugadoresOrdenados.forEach(([jugador, m], idx) => {
     if (prevGoles !== null && m.goles === prevGoles) {
+      // Si hay empate, la posición se mantiene igual
       repeticiones++;
     } else {
+      // Si no hay empate, la posición es la anterior + 1
       if (idx !== 0) {
         posicion++;
       }
@@ -596,29 +542,16 @@ function renderTablaGoleadores(metricasPorJugador) {
     prevGoles = m.goles;
     const golesPorPartido = m.partidos ? (m.goles / m.partidos).toFixed(1) : '0.0';
     const vecesGoleador = contarVecesGoleadorDelPartido(jugador, dataRows, idxFecha, idxJugador, idxGoles);
-    const efectividadGol = calcularEfectividadGoles(jugador, dataRows, idxJugador, idxGoles);
     const rowDelay = (idx * 0.04).toFixed(2);
     let claseTop = '';
     if (posicion === 1) claseTop = 'top1';
     else if (posicion === 2) claseTop = 'top2';
     else if (posicion === 3) claseTop = 'top3';
-    // Barra horizontal proporcional
-    const barraWidth = maxGoles > 0 ? Math.round((m.goles / maxGoles) * 100) : 0;
-    const barraColor = '#ffd700'; // amarillo
-    const barraBg = '#23263a44';
-    const colorTexto = '#fff';
-    const textShadow = '0 1px 4px #23263a, 0 0 2px #000';
-    const barraHTML = `<div style=\"background:${barraBg};border-radius:6px;height:1.1em;width:100%;position:relative;\"><div style=\"background:${barraColor};height:100%;width:${barraWidth}%;border-radius:6px;opacity:0.92;\"></div><span class='goles-barra-num' style=\"position:absolute;left:50%;top:0;width:100%;text-align:center;font-weight:700;color:${colorTexto};font-size:1em;transform:translateX(-50%);z-index:2;text-shadow:${textShadow};\">${m.goles}</span></div>`;
-    html += `<tr style=\"--row-delay:${rowDelay}s\"><td class=\"${claseTop}\">${posicion}</td><td>${jugador}</td><td class=\"col-goles\">${barraHTML}</td><td>${m.partidos}</td><td>${vecesGoleador}</td><td class='${claseGxP(Number(golesPorPartido))}'>${golesPorPartido}</td><td class='${claseDifGol(Number(m.difGol||0))}'>${m.difGol || 0}</td><td class='${clasePorcentaje(Number(efectividadGol))}'>${efectividadGol}%</td></tr>`;
+    html += `<tr style="--row-delay:${rowDelay}s"><td class="${claseTop}">${posicion}</td><td>${jugador}</td><td>${m.partidos}</td><td>${golesPorPartido}</td><td>${m.difGol || 0}</td><td>${vecesGoleador}</td><td>${m.goles}</td></tr>`;
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
-
-  // --- INYECTAR ESTILOS PARA LA COLUMNA DE GOLES ---
-  const estiloGoles = document.getElementById('estilos-col-goles');
-  if (estiloGoles) {
-    estiloGoles.remove();
-  }
+  agregarBotonModoTabla(tablaDiv);
 }
 
 function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
@@ -654,7 +587,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   jugadoresConAsistencias.sort((a, b) => b.porcentaje - a.porcentaje);
 
   // Renderizar la tabla con encabezado de fechas
-  let html = '<table>';
+  let html = '<table><caption style="caption-side:top;font-size:1.2em;font-weight:bold;margin-bottom:8px;">Tribunal de Asistencias</caption>';
   html += '<thead>';
   html += '<tr><th rowspan="2">Jugador</th><th rowspan="2" style="text-align:center;">#</th><th rowspan="2">% Presencias</th>';
   html += `<th colspan="${fechas.length}">Historial de Presencias</th></tr>`;
@@ -662,7 +595,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   html += '<tr>';
   for (let i = 0; i < 3; i++) html += '<th style="display:none"></th>';
   fechas.forEach(fecha => {
-    html += `<th style="font-size:0.9em;white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);padding:2px 0;max-width:1.5em;color:var(--color-secundario);">${fecha}</th>`;
+    html += `<th style="font-size:0.9em;white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);padding:2px 0;max-width:1.5em;">${fecha}</th>`;
   });
   html += '</tr>';
   html += '</thead><tbody>';
@@ -697,8 +630,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
-  // Aseguramos que el botón de modo compacto se agregue correctamente después de renderizar la tabla
-  setTimeout(() => agregarBotonModoTabla(tablaDiv), 0);
+  agregarBotonModoTabla(tablaDiv);
 }
 
 function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPuntos) {
@@ -939,7 +871,7 @@ function renderComparadorJugadores(metricasPorJugador) {
           const partido = partidosPorFecha[e.fecha];
           const puntos1 = Number(partido.find(cols => cols[window.idxJugador] === j1)[window.idxPuntos]);
           const puntos2 = Number(partido.find(cols => cols[window.idxJugador] === j2)[window.idxPuntos]);
-          const goles1 = partido.filter(cols => Number(cols[window.idxJugador] === j1)).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+          const goles1 = partido.filter(cols => Number(cols[window.idxPuntos]) === puntos1).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
           const goles2 = partido.filter(cols => Number(cols[window.idxJugador] === j2)).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
           historialHTML += `<td style="color:${e.resultado1==='Victoria'?'green':e.resultado1==='Derrota'?'#d32f2f':'orange'};font-weight:bold;">${e.resultado1}</td>`;
           historialHTML += `<td style="color:${e.resultado2==='Victoria'?'green':e.resultado2==='Derrota'?'#d32f2f':'orange'};font-weight:bold;">${e.resultado2}</td>`;
@@ -1098,7 +1030,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function agregarBotonModoTabla(tablaDiv) {
   if (!tablaDiv) return;
-  // Evitar duplicados
   let btn = tablaDiv.parentNode.querySelector('.btn-modo-tabla');
   if (!btn) {
     btn = document.createElement('button');
@@ -1113,7 +1044,6 @@ function agregarBotonModoTabla(tablaDiv) {
     btn.style.padding = '0.3em 0.9em';
     btn.style.fontWeight = '600';
     btn.style.cursor = 'pointer';
-    btn.style.alignSelf = 'flex-start';
     btn.onclick = function() {
       const tablaCont = tablaDiv.closest('.tabla');
       if (tablaCont) {
@@ -1123,14 +1053,4 @@ function agregarBotonModoTabla(tablaDiv) {
     };
     tablaDiv.parentNode.insertBefore(btn, tablaDiv);
   }
-}
-
-// Devuelve un color de fondo con gradiente de azul claro a dorado según el valor de goles, con más transparencia
-function colorFondoGoles(goles, maxGoles) {
-  // De 0 a maxGoles, interpolar entre azul claro (#b3e5fc) y dorado suave (#ffe066)
-  const t = Math.max(0, Math.min(1, goles / maxGoles));
-  const r = Math.round(179 + (255 - 179) * t);
-  const g = Math.round(229 + (224 - 229) * t);
-  const b = Math.round(252 + (102 - 252) * t);
-  return `rgba(${r},${g},${b},0.32)`; // Más transparente
 }

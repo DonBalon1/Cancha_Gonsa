@@ -319,7 +319,13 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   }
 
   // Título principal
-  // Título eliminado para evitar duplicado visual, ya está en el HTML principal
+  let titulo = document.getElementById('tituloTablaGeneral');
+  if (!titulo) {
+    titulo = document.createElement('div');
+    titulo.id = 'tituloTablaGeneral';
+    titulo.innerHTML = '<h2 style="color:#ffd700;text-align:center;margin-bottom:0.5em;">Tabla general</h2>';
+    contenedorSuperior.appendChild(titulo);
+  }
 
   // Filtro de partidos mínimos (centrado debajo del título)
   let filtroDiv = document.getElementById('filtroPartidosMinimos');
@@ -654,7 +660,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   jugadoresConAsistencias.sort((a, b) => b.porcentaje - a.porcentaje);
 
   // Renderizar la tabla con encabezado de fechas
-  let html = '<table>';
+  let html = '<table><caption style="caption-side:top;font-size:1.2em;font-weight:bold;margin-bottom:8px;">Tribunal de Asistencias</caption>';
   html += '<thead>';
   html += '<tr><th rowspan="2">Jugador</th><th rowspan="2" style="text-align:center;">#</th><th rowspan="2">% Presencias</th>';
   html += `<th colspan="${fechas.length}">Historial de Presencias</th></tr>`;
@@ -662,7 +668,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   html += '<tr>';
   for (let i = 0; i < 3; i++) html += '<th style="display:none"></th>';
   fechas.forEach(fecha => {
-    html += `<th style="font-size:0.9em;white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);padding:2px 0;max-width:1.5em;color:var(--color-secundario);">${fecha}</th>`;
+    html += `<th style="font-size:0.9em;white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);padding:2px 0;max-width:1.5em;">${fecha}</th>`;
   });
   html += '</tr>';
   html += '</thead><tbody>';
@@ -697,8 +703,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
-  // Aseguramos que el botón de modo compacto se agregue correctamente después de renderizar la tabla
-  setTimeout(() => agregarBotonModoTabla(tablaDiv), 0);
+  agregarBotonModoTabla(tablaDiv);
 }
 
 function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPuntos) {
@@ -1098,22 +1103,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function agregarBotonModoTabla(tablaDiv) {
   if (!tablaDiv) return;
-  // Evitar duplicados
-  let btn = tablaDiv.parentNode.querySelector('.btn-modo-tabla');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.className = 'btn-modo-tabla';
-    btn.textContent = 'Modo compacto';
-    btn.style.marginBottom = '0.7em';
-    btn.style.marginRight = '0.7em';
-    btn.style.background = '#23263a';
+
+// Llamar al renderizador del filtro de fecha al cargar
+window.addEventListener('DOMContentLoaded', () => {
+  renderFiltroFechaTablaGeneral();
+});
+
+function agregarBotonModoTabla(tablaDiv) {
+  if (!tablaDiv) return;
     btn.style.color = '#ffd700';
     btn.style.border = '1.5px solid #27304a';
     btn.style.borderRadius = '7px';
     btn.style.padding = '0.3em 0.9em';
     btn.style.fontWeight = '600';
     btn.style.cursor = 'pointer';
-    btn.style.alignSelf = 'flex-start';
     btn.onclick = function() {
       const tablaCont = tablaDiv.closest('.tabla');
       if (tablaCont) {

@@ -596,16 +596,3 @@ td.rendimiento, td.goleometro {
   line-height: 1.1;
   vertical-align: middle;
 }
-
-/* Columna de puntos en negrita */
-td.puntos, th.puntos {
-  font-weight: 700;
-}
-
-/* Contraste para número de goles en barra de la tabla de goleadores */
-.goles-barra-num {
-  text-shadow: 0 1px 4px #23263a, 0 0 2px #000;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  transition: color 0.2s, text-shadow 0.2s;
-}
