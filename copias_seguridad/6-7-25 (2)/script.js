@@ -1160,9 +1160,7 @@ function renderComparadorJugadores(metricasPorJugador) {
             maxGoles: colorMaxGoles2
           }, j2, vecesGoleador2, efectividadGoles2, maxGoles2, pctVict2, pctAsist2, promPuntos2, promGoles2)}
         </div>
-      </div>
-      <div id="comparadorHistorialDirecto" style="margin-top:2.2em;"></div>
-    `;
+      </div>`;
 
     // Transición de imágenes: fade-in/zoom al cargar/cambiar
     const img1 = document.getElementById('comparadorImg1');
@@ -1179,131 +1177,6 @@ function renderComparadorJugadores(metricasPorJugador) {
         }
       }
     });
-
-    // --- Renderizar tabla de historial directo ---
-    renderHistorialDirectoComparador(j1, j2);
-  }
-
-  // Nueva función: renderiza la tabla de historial directo entre dos jugadores
-  function renderHistorialDirectoComparador(j1, j2) {
-    const dataRows = window.dataFiltradaPorAnio || window.dataRowsOriginal;
-    const idxFecha = window.idxFecha;
-    const idxJugador = window.idxJugador;
-    const idxGoles = window.idxGoles;
-    const idxPuntos = window.idxPuntos;
-    // Agrupar partidos por fecha
-    const partidosPorFecha = {};
-    dataRows.forEach(cols => {
-      const fecha = cols[idxFecha];
-      if (!partidosPorFecha[fecha]) partidosPorFecha[fecha] = [];
-      partidosPorFecha[fecha].push(cols);
-    });
-    // Buscar fechas donde ambos jugadores participaron y NO estaban en el mismo equipo
-    const historial = [];
-    Object.entries(partidosPorFecha).forEach(([fecha, partido]) => {
-      const filaJ1 = partido.find(cols => cols[idxJugador] === j1);
-      const filaJ2 = partido.find(cols => cols[idxJugador] === j2);
-      if (!filaJ1 || !filaJ2) return;
-      const mismoEquipo = filaJ1[idxPuntos] === filaJ2[idxPuntos];
-      // Calcular goles de cada equipo (equipo de J1 y equipo de J2)
-      const equipo1Puntos = filaJ1[idxPuntos];
-      const equipo2Puntos = filaJ2[idxPuntos];
-      const equipo1Jugadores = partido.filter(cols => cols[idxPuntos] === equipo1Puntos);
-      const equipo2Jugadores = partido.filter(cols => cols[idxPuntos] === equipo2Puntos);
-      const golesEquipo1 = equipo1Jugadores.reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-      const golesEquipo2 = equipo2Jugadores.reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-      let global = `${golesEquipo1} - ${golesEquipo2}`;
-      if (mismoEquipo) {
-        // Calcular goles del equipo y del rival correctamente
-        const puntosEquipo = filaJ1[idxPuntos];
-        const golesEquipo = partido.filter(cols => cols[idxPuntos] === puntosEquipo).reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-        const golesRival = partido.filter(cols => cols[idxPuntos] !== puntosEquipo).reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-        let resultadoEquipo = '';
-        if (golesEquipo > golesRival) resultadoEquipo = 'Victoria';
-        else if (golesEquipo < golesRival) resultadoEquipo = 'Derrota';
-        else resultadoEquipo = 'Empate';
-        let global = `${golesEquipo} - ${golesRival}`;
-        historial.push({ fecha, res1: 'Mismo equipo', res2: 'Mismo equipo', global, mismoEquipo: true, resultadoEquipo });
-      } else {
-        // Resultado individual
-        const goles1 = Number(filaJ1[idxGoles]);
-        const goles2 = Number(filaJ2[idxGoles]);
-        const puntos1 = Number(filaJ1[idxPuntos]);
-        const puntos2 = Number(filaJ2[idxPuntos]);
-        let res1 = puntos1 > puntos2 ? 'Victoria' : (puntos1 < puntos2 ? 'Derrota' : 'Empate');
-        let res2 = puntos2 > puntos1 ? 'Victoria' : (puntos2 < puntos1 ? 'Derrota' : 'Empate');
-        historial.push({ fecha, res1, res2, global, goles1, goles2, mismoEquipo: false });
-      }
-    });
-    // Ordenar por fecha descendente (más reciente primero), detectando formato
-    function parseFecha(fecha) {
-      // Soporta formatos: yyyy-mm-dd, dd/mm/yyyy, mm/dd/yyyy
-      if (fecha.includes('-')) return new Date(fecha);
-      if (fecha.includes('/')) {
-        const parts = fecha.split('/');
-        if (parts[2] && parts[2].length === 4) {
-          // dd/mm/yyyy
-          return new Date(parts[2], parts[1] - 1, parts[0]);
-        } else if (parts[0].length === 4) {
-          // yyyy/mm/dd
-          return new Date(parts[0], parts[1] - 1, parts[2]);
-        }
-      }
-      return new Date(fecha);
-    }
-    historial.sort((a, b) => parseFecha(a.fecha) - parseFecha(b.fecha));
-
-    // Calcular historial directo (solo partidos como rivales)
-    let ganadosJ1 = 0, ganadosJ2 = 0, empates = 0;
-    historial.forEach(e => {
-      if (!e.mismoEquipo) {
-        if (e.res1 === 'Victoria') ganadosJ1++;
-        else if (e.res2 === 'Victoria') ganadosJ2++;
-        else empates++;
-      }
-    });
-
-    // Renderizar marcador protagónico
-    let marcadorHTML = '';
-    if (ganadosJ1 + ganadosJ2 + empates > 0) {
-      marcadorHTML = `
-        <div style="display:flex;justify-content:center;align-items:center;margin-bottom:1.2em;margin-top:0.5em;gap:1.2em;">
-          <span style="background:#23263a;color:#4fc3f7;font-size:1.25em;font-weight:700;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #4fc3f755;">${j1}</span>
-          <span style="background:#218c5f;color:#fff;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #218c5f55;">${ganadosJ1}</span>
-          <span style="background:#ffd700;color:#23263a;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #ffd70055;">-</span>
-          <span style="background:#a8231a;color:#fff;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #a8231a55;">${ganadosJ2}</span>
-          <span style="background:#23263a;color:#4fc3f7;font-size:1.25em;font-weight:700;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #4fc3f755;">${j2}</span>
-        </div>
-        <div style="text-align:center;margin-bottom:1.2em;color:#b0b0b0;font-size:1.08em;">
-          ${empates > 0 ? `<span style='background:#b0b0b0;color:#23263a;padding:0.18em 0.8em;border-radius:8px;font-weight:600;margin:0 0.5em;'>Empates: ${empates}</span>` : ''}
-        </div>
-      `;
-    }
-
-    // Renderizar tabla
-    let html = '';
-    if (historial.length === 0) {
-      html = `<div style=\"text-align:center;color:#ffd700;font-weight:600;\">No hay partidos donde hayan coincidido estos jugadores.</div>`;
-    } else {
-      html = `<div style='margin:4em 0 0.5em 0;'></div><h2 class="titulo-comparador" style="margin-top:2.2em;margin-bottom:1.1em;">Historial directo</h2>${marcadorHTML}`;
-      html += `<table class=\"tabla-historial-directo\"><thead><tr><th>Fecha</th><th>Resultado ${j1}</th><th>Resultado ${j2}</th><th>Resultado global</th></tr></thead><tbody>`;
-      historial.forEach(e => {
-        html += `<tr>`;
-        html += `<td>${e.fecha}</td>`;
-        if (e.mismoEquipo) {
-          html += `<td colspan='2' style='color:#4fc3f7;font-weight:bold;text-align:center;'>Mismo equipo</td>`;
-          let color = e.resultadoEquipo === 'Victoria' ? '#218c5f' : (e.resultadoEquipo === 'Derrota' ? '#a8231a' : '#b0b0b0');
-          html += `<td style='font-weight:bold;text-align:center;'>${e.global} <span style=\"display:inline-block;margin-left:0.5em;padding:0.15em 0.7em;border-radius:7px;font-size:0.98em;font-weight:600;background:${color};color:#fff;vertical-align:middle;\">${e.resultadoEquipo}</span></td>`;
-        } else {
-          html += `<td><span class=\"resultado-${e.res1.toLowerCase()}\">${e.res1}</span></td>`;
-          html += `<td><span class=\"resultado-${e.res2.toLowerCase()}\">${e.res2}</span></td>`;
-          html += `<td>${e.global}</td>`;
-        }
-        html += `</tr>`;
-      });
-      html += `</tbody></table>`;
-    }
-    document.getElementById('comparadorHistorialDirecto').innerHTML = html;
   }
   select1.onchange = mostrarComparacion;
   select2.onchange = mostrarComparacion;

@@ -726,8 +726,9 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
 }
 
 function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPuntos) {
+  const selector = document.getElementById('selectorPartido');
   const detalleDiv = document.getElementById('detallePartido');
-  if (!detalleDiv) return;
+  if (!selector || !detalleDiv) return;
 
   // Agrupar partidos por fecha
   const partidosPorFecha = {};
@@ -738,21 +739,16 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
   });
   const fechas = Object.keys(partidosPorFecha);
 
-  // Función para crear el selector dinámicamente
-  function crearSelector(fechaActual) {
-    const select = document.createElement('select');
-    select.id = 'selectorPartido';
-    fechas.forEach(fecha => {
-      const option = document.createElement('option');
-      option.value = fecha;
-      option.textContent = fecha;
-      if (fecha === fechaActual) option.selected = true;
-      select.appendChild(option);
-    });
-    return select;
-  }
+  // Poblar el selector
+  selector.innerHTML = '';
+  fechas.forEach(fecha => {
+    const option = document.createElement('option');
+    option.value = fecha;
+    option.textContent = fecha;
+    selector.appendChild(option);
+  });
 
-  // Función para mostrar el detalle de un partido como CARD (inyectando el selector dentro de la tarjeta)
+  // Función para mostrar el detalle de un partido como CARD
   function mostrarDetalle(fecha) {
     const partido = partidosPorFecha[fecha];
     if (!partido) { detalleDiv.innerHTML = ''; return; }
@@ -765,49 +761,20 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
     const golesPerdedores = perdedores.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
     const golesEmpatados = empatados.reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
 
-    // Calcular máximo de goles por equipo
-    const maxGolesGanador = ganadores.length ? Math.max(...ganadores.map(cols => Number(cols[idxGoles]) || 0)) : 0;
-    const maxGolesPerdedor = perdedores.length ? Math.max(...perdedores.map(cols => Number(cols[idxGoles]) || 0)) : 0;
-    const maxGolesEmpatado = empatados.length ? Math.max(...empatados.map(cols => Number(cols[idxGoles]) || 0)) : 0;
-
-    // Calcular máximo de goles de todo el partido
-    const maxGolesPartido = partido.length ? Math.max(...partido.map(cols => Number(cols[idxGoles]) || 0)) : 0;
     // --- CARD MODERNA Y MINIMALISTA ---
     let html = `<div class="partidos-cards-container" style="display:flex;justify-content:center;align-items:center;">`;
     html += `<div class="partido-card" data-show="true" style="max-width:540px;width:100%;margin:0 auto;">`;
-    // Inyectar el selector justo arriba del resultado
-    html += `<div style='display:flex;justify-content:center;align-items:center;margin:0.5em 0 0.2em 0;'>`;
-    html += `<label for='selectorPartido' style='color:#6cf;font-size:1.08em;margin-right:0.6em;'>Seleccioná una fecha:</label>`;
-    html += `<span id='contenedorSelectorPartido'></span>`;
-    html += `</div>`;
-    html += `<div class="partido-card-header" style="display:flex;justify-content:center;align-items:center;margin-bottom:0.7em;">`;
-    html += `<span class=\"partido-card-resultado\" style="
-      font-size:2.2em;
-      min-width:110px;
-      text-align:center;
-      display:block;
-      margin:0 auto;
-      font-weight:800;
-      letter-spacing:2px;
-      background: linear-gradient(90deg, #23263a 60%, #23263a00 100%);
-      border-radius: 1em;
-      box-shadow: 0 2px 12px #0003, 0 1px 0 #ffd70033;
-      padding: 0.12em 0.5em 0.12em 0.5em;
-      color: #fff;
-      position:relative;
-      z-index:2;
-      text-shadow: 0 2px 8px #000a, 0 1px 0 #ffd70033;
-      ">`;
+    html += `<div class=\"partido-card-header\" style=\"display:flex;justify-content:center;align-items:center;\">`;
+    html += `<span class=\"partido-card-resultado\" style=\"font-size:2.1em;min-width:120px;text-align:center;display:block;margin:0 auto;font-weight:700;letter-spacing:2px;\">`;
     if (ganadores.length && perdedores.length) {
-      html += `<span style='font-weight:900;color:#4caf50;text-shadow:0 2px 8px #23263a,0 0 8px #4caf5040;'>${golesGanadores}</span> <span style='color:#ffd700;font-size:1.1em;text-shadow:0 1px 8px #ffd70099;'>-</span> <span style='font-weight:900;color:#d32f2f;text-shadow:0 2px 8px #23263a,0 0 8px #d32f2f40;'>${golesPerdedores}</span>`;
+      html += `<span style='font-weight:700;color:#4caf50;'>${golesGanadores}</span> <span style='color:#ffd700;font-size:1.1em;'>-</span> <span style='font-weight:700;color:#d32f2f;'>${golesPerdedores}</span>`;
     } else if (empatados.length) {
-      html += `<span style='font-weight:900;color:#ffd700;text-shadow:0 2px 8px #23263a,0 0 8px #ffd70099;'>${golesEmpatados}</span> <span style='color:#ffd700;font-size:1.1em;text-shadow:0 1px 8px #ffd70099;'>-</span> <span style='font-weight:900;color:#ffd700;text-shadow:0 2px 8px #23263a,0 0 8px #ffd70099;'>${golesEmpatados}</span>`;
+      html += `<span style='font-weight:700;color:#ffd700;'>${golesEmpatados}</span> <span style='color:#ffd700;font-size:1.1em;'>-</span> <span style='font-weight:700;color:#ffd700;'>${golesEmpatados}</span>`;
     } else {
       html += `-`;
     }
     html += `</span>`;
     html += `</div>`;
-
     // Carteles de ganador/perdedor justo por encima de las tarjetas, sin "VS" ni divisor
     if (ganadores.length && perdedores.length) {
       html += `<div style=\"display:grid;grid-template-columns:1fr 1fr;justify-items:center;align-items:center;gap:0;margin:0.7em 0 0.2em 0;width:100%;max-width:540px;margin-left:auto;margin-right:auto;\">`;
@@ -833,15 +800,10 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
         const rutaImg = `img/jugadores/${nombreArchivo}`;
         const rutaImgVacia = `img/jugadores/jugador-vacio.png`;
         const imgHtml = `<img src="${rutaImg}" alt="${nombre}" onerror="this.onerror=null;this.src='${rutaImgVacia}';" style="width:38px;height:38px;object-fit:cover;border-radius:50%;box-shadow:0 1px 4px #0002;">`;
-        // Medalla solo si es el goleador absoluto del partido
-        const esGoleador = goles > 0 && goles === maxGolesPartido;
-        html += `<span class=\"partido-card-jugador\" style=\"background:rgba(76,175,80,0.13);color:#4caf50;display:flex;flex-direction:row;align-items:center;gap:0.5em;width:100%;\">`;
+        html += `<span class=\"partido-card-jugador\" style=\"background:rgba(76,175,80,0.13);color:#4caf50;\">`;
         html += imgHtml;
-        // Ajuste: mayor ancho para el nombre y los goles, y permitir wrap
-        html += `<span style="display:flex;flex-direction:column;align-items:flex-end;justify-content:center;min-width:0;width:100%;text-align:right;">`;
-        html += `<span class="nombre-jugador" style="white-space:normal;overflow:visible;text-overflow:unset;max-width:220px;display:block;order:1;text-align:right;font-size:1.08em;">${nombre}${esGoleador ? ' 🥇' : ''}</span>`;
-        html += `<span class="partido-card-goles" style="color:#4caf50;margin-top:2px;display:block;order:2;text-align:right;font-size:1em;white-space:normal;word-break:break-word;">${goles > 0 ? '<span class=\"icono-gol\" style=\"font-size:1em;\">⚽</span>'.repeat(goles) : ''}</span>`;
-        html += `</span>`;
+        if (goles > 0) html += `<span class=\"partido-card-goles\" style=\"color:#4caf50;\">${'<span class=\\"icono-gol\\">⚽</span>'.repeat(goles)}</span>`;
+        html += `<span class=\"nombre-jugador\">${nombre}</span>`;
         html += `</span>`;
       });
       html += `</div>`;
@@ -857,14 +819,10 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
         const rutaImg = `img/jugadores/${nombreArchivo}`;
         const rutaImgVacia = `img/jugadores/jugador-vacio.png`;
         const imgHtml = `<img src="${rutaImg}" alt="${nombre}" onerror="this.onerror=null;this.src='${rutaImgVacia}';" style="width:38px;height:38px;object-fit:cover;border-radius:50%;box-shadow:0 1px 4px #0002;">`;
-        // Medalla solo si es el goleador absoluto del partido
-        const esGoleador = goles > 0 && goles === maxGolesPartido;
-        html += `<span class=\"partido-card-jugador\" style=\"background:rgba(211,47,47,0.13);color:#d32f2f;display:flex;flex-direction:row;align-items:flex-start;gap:0.5em;width:100%;\">`;
+        html += `<span class=\"partido-card-jugador\" style=\"background:rgba(211,47,47,0.13);color:#d32f2f;\">`;
         html += imgHtml;
-        html += `<span style=\"display:flex;flex-direction:column;align-items:flex-start;min-width:0;width:100%;\">`;
-        html += `<span class=\"nombre-jugador\" style=\"white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:block;\">${nombre}${esGoleador ? ' 🥇' : ''}</span>`;
-        if (goles > 0) html += `<span class=\"partido-card-goles\" style=\"color:#d32f2f;margin-top:2px;display:block;font-size:0.95em;white-space:nowrap;\">${'<span class=\\"icono-gol\\" style=\\"font-size:0.95em;\">⚽</span>'.repeat(goles)}</span>`;
-        html += `</span>`;
+        if (goles > 0) html += `<span class=\"partido-card-goles\" style=\"color:#d32f2f;\">${'<span class=\\"icono-gol\\">⚽</span>'.repeat(goles)}</span>`;
+        html += `<span class=\"nombre-jugador\">${nombre}</span>`;
         html += `</span>`;
       });
       html += `</div>`;
@@ -879,14 +837,10 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
         const rutaImg = `img/jugadores/${nombreArchivo}`;
         const rutaImgVacia = `img/jugadores/jugador-vacio.png`;
         const imgHtml = `<img src="${rutaImg}" alt="${nombre}" onerror="this.onerror=null;this.src='${rutaImgVacia}';" style="width:38px;height:38px;object-fit:cover;border-radius:50%;box-shadow:0 1px 4px #0002;">`;
-        // Medalla solo si es el goleador absoluto del partido
-        const esGoleador = goles > 0 && goles === maxGolesPartido;
-        html += `<span class=\"partido-card-jugador\" style=\"background:rgba(255,215,0,0.13);color:#ffd700;display:flex;align-items:center;gap:0.5em;\">`;
+        html += `<span class=\"partido-card-jugador\" style=\"background:rgba(255,215,0,0.13);color:#ffd700;\">`;
         html += imgHtml;
-        html += `<span style=\"display:flex;flex-direction:column;align-items:flex-start;min-width:0;\">`;
-        html += `<span class=\"nombre-jugador\" style=\"white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;display:block;\">${nombre}${esGoleador ? ' 🥇' : ''}</span>`;
-        if (goles > 0) html += `<span class=\"partido-card-goles\" style=\"color:#ffd700;margin-top:2px;word-break:break-all;\">${'<span class=\\"icono-gol\\">⚽</span>'.repeat(goles)}</span>`;
-        html += `</span>`;
+        if (goles > 0) html += `<span class=\"partido-card-goles\" style=\"color:#ffd700;\">${'<span class=\\"icono-gol\\">⚽</span>'.repeat(goles)}</span>`;
+        html += `<span class=\"nombre-jugador\">${nombre}</span>`;
         html += `</span>`;
       });
       html += `</div>`;
@@ -911,13 +865,6 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
     html += `</div>`; // .partido-card
     html += `</div>`; // .partidos-cards-container
     detalleDiv.innerHTML = html;
-    // Inyectar el selector real en el contenedor
-    const contenedorSelector = detalleDiv.querySelector('#contenedorSelectorPartido');
-    if (contenedorSelector) {
-      const selectorNuevo = crearSelector(fecha);
-      contenedorSelector.appendChild(selectorNuevo);
-      selectorNuevo.onchange = e => mostrarDetalle(e.target.value);
-    }
     // Forzar animación (reflow)
     setTimeout(() => {
       const card = detalleDiv.querySelector('.partido-card');
@@ -927,30 +874,13 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
 
   // Mostrar el primer partido por defecto
   if (fechas.length > 0) mostrarDetalle(fechas[0]);
+
+  // Cambiar detalle al seleccionar otra fecha
+  selector.onchange = e => mostrarDetalle(e.target.value);
 }
 
 // --- COMPARADOR DE JUGADORES ---
 function renderComparadorJugadores(metricasPorJugador) {
-  // Botón random/sorpresa
-  const randomBtn = document.getElementById('comparadorRandomBtn');
-  if (randomBtn) {
-    randomBtn.onclick = function() {
-      if (jugadores.length < 2) return;
-      let idx1 = Math.floor(Math.random() * jugadores.length);
-      let idx2;
-      do { idx2 = Math.floor(Math.random() * jugadores.length); } while (idx2 === idx1);
-      select1.value = jugadores[idx1];
-      select2.value = jugadores[idx2];
-      select1.dispatchEvent(new Event('change'));
-      select2.dispatchEvent(new Event('change'));
-      randomBtn.blur();
-      // --- ANIMACIÓN REBOTE ---
-      randomBtn.classList.remove('bounce');
-      void randomBtn.offsetWidth; // Forzar reflow para reiniciar animación
-      randomBtn.classList.add('bounce');
-      setTimeout(() => randomBtn.classList.remove('bounce'), 600);
-    };
-  }
   const select1 = document.getElementById('comparadorJugador1');
   const select2 = document.getElementById('comparadorJugador2');
   const estadisticasDiv = document.getElementById('comparadorEstadisticas');
@@ -1025,285 +955,133 @@ function renderComparadorJugadores(metricasPorJugador) {
     const idxGoles = window.idxGoles;
     const vecesGoleador1 = contarVecesGoleadorDelPartido(j1, dataRows, idxFecha, idxJugador, idxGoles);
     const vecesGoleador2 = contarVecesGoleadorDelPartido(j2, dataRows, idxFecha, idxJugador, idxGoles);
-
-    // Efectividad de goles y máximo de goles
-    const efectividadGoles1 = Number(calcularEfectividadGoles(j1, dataRows, idxJugador, idxGoles));
-    const efectividadGoles2 = Number(calcularEfectividadGoles(j2, dataRows, idxJugador, idxGoles));
-    const maxGoles1 = Number(calcularMaximoGoles(j1, dataRows, idxJugador, idxGoles));
-    const maxGoles2 = Number(calcularMaximoGoles(j2, dataRows, idxJugador, idxGoles));
-
-    // Función para color comparativo
-    function colorComparativo(val1, val2) {
-      if (val1 > val2) return 'limegreen';
-      if (val1 < val2) return '#d32f2f';
-      return 'gray';
-    }
-
-    // Colores para todas las métricas
-    const colorPartidos1 = colorComparativo(m1.partidos, m2.partidos);
-    const colorPartidos2 = colorComparativo(m2.partidos, m1.partidos);
-    const colorPuntos1 = colorComparativo(m1.puntos, m2.puntos);
-    const colorPuntos2 = colorComparativo(m2.puntos, m1.puntos);
-    const colorGoles1 = colorComparativo(m1.goles, m2.goles);
-    const colorGoles2 = colorComparativo(m2.goles, m1.goles);
-    const colorDifGol1 = colorComparativo(m1.difGol, m2.difGol);
-    const colorDifGol2 = colorComparativo(m2.difGol, m1.difGol);
-    const colorPctVict1 = colorComparativo(pctVict1, pctVict2);
-    const colorPctVict2 = colorComparativo(pctVict2, pctVict1);
-    const colorPctAsist1 = colorComparativo(pctAsist1, pctAsist2);
-    const colorPctAsist2 = colorComparativo(pctAsist2, pctAsist1);
-    const colorPromPuntos1 = colorComparativo(promPuntos1, promPuntos2);
-    const colorPromPuntos2 = colorComparativo(promPuntos2, promPuntos1);
-    const colorPromGoles1 = colorComparativo(promGoles1, promGoles2);
-    const colorPromGoles2 = colorComparativo(promGoles2, promGoles1);
-    const colorGoleador1 = colorComparativo(vecesGoleador1, vecesGoleador2);
-    const colorGoleador2 = colorComparativo(vecesGoleador2, vecesGoleador1);
-    const colorEfectividad1 = colorComparativo(efectividadGoles1, efectividadGoles2);
-    const colorEfectividad2 = colorComparativo(efectividadGoles2, efectividadGoles1);
-    const colorMaxGoles1 = colorComparativo(maxGoles1, maxGoles2);
-    const colorMaxGoles2 = colorComparativo(maxGoles2, maxGoles1);
-
-    // Contar cuántas métricas gana cada jugador
-    const metricas = [
-      colorPartidos1, colorPuntos1, colorGoles1, colorDifGol1, colorPctVict1, colorPctAsist1,
-      colorPromPuntos1, colorPromGoles1, colorGoleador1, colorEfectividad1, colorMaxGoles1
-    ];
-    const metricas2 = [
-      colorPartidos2, colorPuntos2, colorGoles2, colorDifGol2, colorPctVict2, colorPctAsist2,
-      colorPromPuntos2, colorPromGoles2, colorGoleador2, colorEfectividad2, colorMaxGoles2
-    ];
-    const ganadas1 = metricas.filter(c => c === 'limegreen').length;
-    const ganadas2 = metricas2.filter(c => c === 'limegreen').length;
-    // Estadísticas en lista
-    function estadisticasLista(m, colores, nombre, vecesGoleador, efectividad, maxGoles, pctVict, pctAsist, promPuntos, promGoles) {
-      // Helper para clase de fondo
-      function bgClass(color) {
-        if (color === 'limegreen') return 'bg-mayor';
-        if (color === '#d32f2f') return 'bg-menor';
-        return 'bg-igual';
-      }
-      // Tooltips para cada métrica
-      const tooltips = {
-        'Partidos Jugados': 'Cantidad total de partidos jugados por el jugador.',
-        'Puntos': 'Puntos totales obtenidos (3 por victoria, 1 por empate).',
-        'Goles': 'Cantidad total de goles anotados.',
-        'Diferencia de Gol': 'Goles a favor menos goles en contra.',
-        '% Victorias': 'Porcentaje de partidos ganados sobre el total jugado.',
-        '% Asistencias': 'Porcentaje de partidos jugados respecto al total de fechas.',
-        'Prom. Puntos/Partido': 'Promedio de puntos obtenidos por partido jugado.',
-        'Prom. Goles/Partido': 'Promedio de goles anotados por partido jugado.',
-        'Veces Goleador del Partido': 'Cantidad de veces que fue el máximo goleador en un partido.',
-        'Efectividad de Goles': 'Porcentaje de partidos en los que anotó al menos un gol.',
-        'Máx. Goles en un Partido': 'Mayor cantidad de goles anotados en un solo partido.'
-      };
-      // Fila visual de ganados, empatados, perdidos SIN iconos
-      const resultadosRow = `<div class="comparador-resultados-row">
-        <span class="comparador-resultado-badge comparador-resultado-ganado" title="Ganados">${m.ganados}</span>
-        <span class="comparador-resultado-badge comparador-resultado-empatado" title="Empatados">${m.empatados}</span>
-        <span class="comparador-resultado-badge comparador-resultado-perdido" title="Perdidos">${m.perdidos}</span>
-      </div>`;
-      return resultadosRow + `<div class='comparador-estadisticas-lista'>
-        <div class='comparador-estadistica-item ${bgClass(colores.partidos)}' title="${tooltips['Partidos Jugados']}"><span>Partidos Jugados</span><span><b style='color:${colores.partidos};'>${m.partidos}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.puntos)}' title="${tooltips['Puntos']}"><span>Puntos</span><span><b style='color:${colores.puntos};'>${m.puntos}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.goles)}' title="${tooltips['Goles']}"><span>Goles</span><span><b style='color:${colores.goles};'>${m.goles}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.difGol)}' title="${tooltips['Diferencia de Gol']}"><span>Diferencia de Gol</span><span><b style='color:${colores.difGol};'>${m.difGol}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.pctVict)}' title="${tooltips['% Victorias']}"><span>% Victorias</span><span><b style='color:${colores.pctVict};'>${pctVict}%</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.pctAsist)}' title="${tooltips['% Asistencias']}"><span>% Asistencias</span><span><b style='color:${colores.pctAsist};'>${pctAsist}%</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.promPuntos)}' title="${tooltips['Prom. Puntos/Partido']}"><span>Prom. Puntos/Partido</span><span><b style='color:${colores.promPuntos};'>${promPuntos}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.promGoles)}' title="${tooltips['Prom. Goles/Partido']}"><span>Prom. Goles/Partido</span><span><b style='color:${colores.promGoles};'>${promGoles}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.goleador)}' title="${tooltips['Veces Goleador del Partido']}"><span>Veces Goleador del Partido</span><span><b style='color:${colores.goleador};'>${vecesGoleador}</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.efectividad)}' title="${tooltips['Efectividad de Goles']}"><span>Efectividad de Goles</span><span><b style='color:${colores.efectividad};'>${efectividad}%</b></span></div>
-        <div class='comparador-estadistica-item ${bgClass(colores.maxGoles)}' title="${tooltips['Máx. Goles en un Partido']}"><span>Máx. Goles en un Partido</span><span><b style='color:${colores.maxGoles};'>${maxGoles}</b></span></div>
-      </div>`;
-    }
-    // Para reiniciar animación, forzamos reflow
-    estadisticasDiv.innerHTML = '';
-    void estadisticasDiv.offsetWidth;
-    estadisticasDiv.innerHTML = `
-      <div class='comparador-container' style='margin-bottom:0;'>
-        <div class='comparador-card selected${ganadas1 > ganadas2 ? ' comparador-card-ganador' : ''}'>
-          <div class='comparador-jugador-img-nombre'>
-            <img class='comparador-jugador-img' id='comparadorImg1' src="img/jugadores/jugador-${j1.toLowerCase().replace(/ /g, '').replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u').replace(/ñ/g,'n')}.png" alt="${j1}" onerror="this.onerror=null;this.src='img/jugadores/jugador-vacio.png';" />
-            <span class='comparador-jugador-nombre'>${j1}</span>
-          </div>
-          ${estadisticasLista(m1, {
-            partidos: colorPartidos1,
-            puntos: colorPuntos1,
-            goles: colorGoles1,
-            difGol: colorDifGol1,
-            pctVict: colorPctVict1,
-            pctAsist: colorPctAsist1,
-            promPuntos: colorPromPuntos1,
-            promGoles: colorPromGoles1,
-            goleador: colorGoleador1,
-            efectividad: colorEfectividad1,
-            maxGoles: colorMaxGoles1
-          }, j1, vecesGoleador1, efectividadGoles1, maxGoles1, pctVict1, pctAsist1, promPuntos1, promGoles1)}
-        </div>
-        <div class='comparador-vs'>VS</div>
-        <div class='comparador-card selected${ganadas2 > ganadas1 ? ' comparador-card-ganador' : ''}'>
-          <div class='comparador-jugador-img-nombre'>
-            <img class='comparador-jugador-img' id='comparadorImg2' src="img/jugadores/jugador-${j2.toLowerCase().replace(/ /g, '').replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u').replace(/ñ/g,'n')}.png" alt="${j2}" onerror="this.onerror=null;this.src='img/jugadores/jugador-vacio.png';" />
-            <span class='comparador-jugador-nombre'>${j2}</span>
-          </div>
-          ${estadisticasLista(m2, {
-            partidos: colorPartidos2,
-            puntos: colorPuntos2,
-            goles: colorGoles2,
-            difGol: colorDifGol2,
-            pctVict: colorPctVict2,
-            pctAsist: colorPctAsist2,
-            promPuntos: colorPromPuntos2,
-            promGoles: colorPromGoles2,
-            goleador: colorGoleador2,
-            efectividad: colorEfectividad2,
-            maxGoles: colorMaxGoles2
-          }, j2, vecesGoleador2, efectividadGoles2, maxGoles2, pctVict2, pctAsist2, promPuntos2, promGoles2)}
-        </div>
-      </div>
-      <div id="comparadorHistorialDirecto" style="margin-top:2.2em;"></div>
-    `;
-
-    // Transición de imágenes: fade-in/zoom al cargar/cambiar
-    const img1 = document.getElementById('comparadorImg1');
-    const img2 = document.getElementById('comparadorImg2');
-    [img1, img2].forEach(img => {
-      if (img) {
-        img.classList.remove('loaded');
-        img.onload = function() {
-          img.classList.add('loaded');
-        };
-        // Si la imagen ya está en caché, forzar el efecto
-        if (img.complete && img.naturalWidth > 0) {
-          setTimeout(() => img.classList.add('loaded'), 10);
-        }
-      }
-    });
-
-    // --- Renderizar tabla de historial directo ---
-    renderHistorialDirectoComparador(j1, j2);
-  }
-
-  // Nueva función: renderiza la tabla de historial directo entre dos jugadores
-  function renderHistorialDirectoComparador(j1, j2) {
-    const dataRows = window.dataFiltradaPorAnio || window.dataRowsOriginal;
-    const idxFecha = window.idxFecha;
-    const idxJugador = window.idxJugador;
-    const idxGoles = window.idxGoles;
-    const idxPuntos = window.idxPuntos;
-    // Agrupar partidos por fecha
+    const colorGoleador1 = vecesGoleador1 > vecesGoleador2 ? 'limegreen' : (vecesGoleador1 < vecesGoleador2 ? '#d32f2f' : 'gray');
+    const colorGoleador2 = vecesGoleador2 > vecesGoleador1 ? 'limegreen' : (vecesGoleador2 < vecesGoleador1 ? '#d32f2f' : 'gray');
+    // Colores para destacar el mayor
+    const colorGoles1 = Number(promGoles1) > Number(promGoles2) ? 'limegreen' : (Number(promGoles1) < Number(promGoles2) ? '#d32f2f' : 'gray');
+    const colorGoles2 = Number(promGoles2) > Number(promGoles1) ? 'limegreen' : (Number(promGoles2) < Number(promGoles1) ? '#d32f2f' : 'gray');
+    const colorPuntos1 = Number(promPuntos1) > Number(promPuntos2) ? 'limegreen' : (Number(promPuntos1) < Number(promPuntos2) ? '#d32f2f' : 'gray');
+    const colorPuntos2 = Number(promPuntos2) > Number(promPuntos1) ? 'limegreen' : (Number(promPuntos2) < Number(promPuntos1) ? '#d32f2f' : 'gray');
+    // --- Historial de enfrentamientos directos detallado ---
+    // Buscar partidos donde ambos jugaron
     const partidosPorFecha = {};
     dataRows.forEach(cols => {
       const fecha = cols[idxFecha];
       if (!partidosPorFecha[fecha]) partidosPorFecha[fecha] = [];
       partidosPorFecha[fecha].push(cols);
     });
-    // Buscar fechas donde ambos jugadores participaron y NO estaban en el mismo equipo
-    const historial = [];
+    const enfrentamientos = [];
+    let victoriasJ1 = 0, victoriasJ2 = 0, empates = 0, mismosEquipo = 0;
     Object.entries(partidosPorFecha).forEach(([fecha, partido]) => {
-      const filaJ1 = partido.find(cols => cols[idxJugador] === j1);
-      const filaJ2 = partido.find(cols => cols[idxJugador] === j2);
-      if (!filaJ1 || !filaJ2) return;
-      const mismoEquipo = filaJ1[idxPuntos] === filaJ2[idxPuntos];
-      // Calcular goles de cada equipo (equipo de J1 y equipo de J2)
-      const equipo1Puntos = filaJ1[idxPuntos];
-      const equipo2Puntos = filaJ2[idxPuntos];
-      const equipo1Jugadores = partido.filter(cols => cols[idxPuntos] === equipo1Puntos);
-      const equipo2Jugadores = partido.filter(cols => cols[idxPuntos] === equipo2Puntos);
-      const golesEquipo1 = equipo1Jugadores.reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-      const golesEquipo2 = equipo2Jugadores.reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-      let global = `${golesEquipo1} - ${golesEquipo2}`;
-      if (mismoEquipo) {
-        // Calcular goles del equipo y del rival correctamente
-        const puntosEquipo = filaJ1[idxPuntos];
-        const golesEquipo = partido.filter(cols => cols[idxPuntos] === puntosEquipo).reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-        const golesRival = partido.filter(cols => cols[idxPuntos] !== puntosEquipo).reduce((acc, c) => acc + Number(c[idxGoles]), 0);
-        let resultadoEquipo = '';
-        if (golesEquipo > golesRival) resultadoEquipo = 'Victoria';
-        else if (golesEquipo < golesRival) resultadoEquipo = 'Derrota';
-        else resultadoEquipo = 'Empate';
-        let global = `${golesEquipo} - ${golesRival}`;
-        historial.push({ fecha, res1: 'Mismo equipo', res2: 'Mismo equipo', global, mismoEquipo: true, resultadoEquipo });
-      } else {
-        // Resultado individual
-        const goles1 = Number(filaJ1[idxGoles]);
-        const goles2 = Number(filaJ2[idxGoles]);
-        const puntos1 = Number(filaJ1[idxPuntos]);
-        const puntos2 = Number(filaJ2[idxPuntos]);
-        let res1 = puntos1 > puntos2 ? 'Victoria' : (puntos1 < puntos2 ? 'Derrota' : 'Empate');
-        let res2 = puntos2 > puntos1 ? 'Victoria' : (puntos2 < puntos1 ? 'Derrota' : 'Empate');
-        historial.push({ fecha, res1, res2, global, goles1, goles2, mismoEquipo: false });
-      }
-    });
-    // Ordenar por fecha descendente (más reciente primero), detectando formato
-    function parseFecha(fecha) {
-      // Soporta formatos: yyyy-mm-dd, dd/mm/yyyy, mm/dd/yyyy
-      if (fecha.includes('-')) return new Date(fecha);
-      if (fecha.includes('/')) {
-        const parts = fecha.split('/');
-        if (parts[2] && parts[2].length === 4) {
-          // dd/mm/yyyy
-          return new Date(parts[2], parts[1] - 1, parts[0]);
-        } else if (parts[0].length === 4) {
-          // yyyy/mm/dd
-          return new Date(parts[0], parts[1] - 1, parts[2]);
-        }
-      }
-      return new Date(fecha);
-    }
-    historial.sort((a, b) => parseFecha(a.fecha) - parseFecha(b.fecha));
-
-    // Calcular historial directo (solo partidos como rivales)
-    let ganadosJ1 = 0, ganadosJ2 = 0, empates = 0;
-    historial.forEach(e => {
-      if (!e.mismoEquipo) {
-        if (e.res1 === 'Victoria') ganadosJ1++;
-        else if (e.res2 === 'Victoria') ganadosJ2++;
-        else empates++;
-      }
-    });
-
-    // Renderizar marcador protagónico
-    let marcadorHTML = '';
-    if (ganadosJ1 + ganadosJ2 + empates > 0) {
-      marcadorHTML = `
-        <div style="display:flex;justify-content:center;align-items:center;margin-bottom:1.2em;margin-top:0.5em;gap:1.2em;">
-          <span style="background:#23263a;color:#4fc3f7;font-size:1.25em;font-weight:700;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #4fc3f755;">${j1}</span>
-          <span style="background:#218c5f;color:#fff;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #218c5f55;">${ganadosJ1}</span>
-          <span style="background:#ffd700;color:#23263a;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #ffd70055;">-</span>
-          <span style="background:#a8231a;color:#fff;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #a8231a55;">${ganadosJ2}</span>
-          <span style="background:#23263a;color:#4fc3f7;font-size:1.25em;font-weight:700;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #4fc3f755;">${j2}</span>
-        </div>
-        <div style="text-align:center;margin-bottom:1.2em;color:#b0b0b0;font-size:1.08em;">
-          ${empates > 0 ? `<span style='background:#b0b0b0;color:#23263a;padding:0.18em 0.8em;border-radius:8px;font-weight:600;margin:0 0.5em;'>Empates: ${empates}</span>` : ''}
-        </div>
-      `;
-    }
-
-    // Renderizar tabla
-    let html = '';
-    if (historial.length === 0) {
-      html = `<div style=\"text-align:center;color:#ffd700;font-weight:600;\">No hay partidos donde hayan coincidido estos jugadores.</div>`;
-    } else {
-      html = `<div style='margin:4em 0 0.5em 0;'></div><h2 class="titulo-comparador" style="margin-top:2.2em;margin-bottom:1.1em;">Historial directo</h2>${marcadorHTML}`;
-      html += `<table class=\"tabla-historial-directo\"><thead><tr><th>Fecha</th><th>Resultado ${j1}</th><th>Resultado ${j2}</th><th>Resultado global</th></tr></thead><tbody>`;
-      historial.forEach(e => {
-        html += `<tr>`;
-        html += `<td>${e.fecha}</td>`;
-        if (e.mismoEquipo) {
-          html += `<td colspan='2' style='color:#4fc3f7;font-weight:bold;text-align:center;'>Mismo equipo</td>`;
-          let color = e.resultadoEquipo === 'Victoria' ? '#218c5f' : (e.resultadoEquipo === 'Derrota' ? '#a8231a' : '#b0b0b0');
-          html += `<td style='font-weight:bold;text-align:center;'>${e.global} <span style=\"display:inline-block;margin-left:0.5em;padding:0.15em 0.7em;border-radius:7px;font-size:0.98em;font-weight:600;background:${color};color:#fff;vertical-align:middle;\">${e.resultadoEquipo}</span></td>`;
+      const jugadoresEnPartido = partido.map(cols => cols[idxJugador]);
+      if (jugadoresEnPartido.includes(j1) && jugadoresEnPartido.includes(j2)) {
+        // Buscar info de cada jugador
+        const info1 = partido.find(cols => cols[idxJugador] === j1);
+        const info2 = partido.find(cols => cols[idxJugador] === j2);
+        if (!info1 || !info2) return;
+        const puntos1 = Number(info1[window.idxPuntos]);
+        const puntos2 = Number(info2[window.idxPuntos]);
+        const goles1 = Number(info1[idxGoles]);
+        const goles2 = Number(info2[idxGoles]);
+        // Determinar si están en el mismo equipo (mismo puntaje)
+        let resultado1 = '', resultado2 = '', mismoEquipo = false;
+        if (puntos1 === puntos2) {
+          mismoEquipo = true;
+          resultado1 = resultado2 = 'Mismo equipo';
+        } else if (puntos1 > puntos2) {
+          resultado1 = 'Victoria'; resultado2 = 'Derrota';
         } else {
-          html += `<td><span class=\"resultado-${e.res1.toLowerCase()}\">${e.res1}</span></td>`;
-          html += `<td><span class=\"resultado-${e.res2.toLowerCase()}\">${e.res2}</span></td>`;
-          html += `<td>${e.global}</td>`;
+          resultado1 = 'Derrota'; resultado2 = 'Victoria';
         }
-        html += `</tr>`;
+        // ¿Alguno fue goleador del partido?
+        const maxGoles = Math.max(...partido.map(cols => Number(cols[idxGoles]) || 0));
+        const esGoleador1 = goles1 === maxGoles && maxGoles > 0;
+        const esGoleador2 = goles2 === maxGoles && maxGoles > 0;
+        enfrentamientos.push({ fecha, goles1, goles2, resultado1, resultado2, esGoleador1, esGoleador2, mismoEquipo });
+        // Para el historial numérico: solo contar si NO están en el mismo equipo
+        if (!mismoEquipo) {
+          if (puntos1 > puntos2) victoriasJ1++;
+          else if (puntos2 > puntos1) victoriasJ2++;
+        }
+      }
+    });
+    // Ordenar por fecha ascendente
+    enfrentamientos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+    // Historial numérico por escrito
+    let resumenNumerico = `<div style='margin-bottom:0.5em;font-size:1.1em;'><b>${j1} vs ${j2}:</b> ${victoriasJ1} - ${victoriasJ2}</div>`;
+    let historialHTML = '';
+    if (enfrentamientos.length > 0) {
+      historialHTML += `<div style="margin-top:1.5em;"><b>Historial de enfrentamientos directos:</b></div>`;
+      historialHTML += `<table style="margin-top:0.5em;max-width:100%;font-size:0.98em;"><thead><tr><th>Fecha</th><th>Resultado ${j1}</th><th>Resultado ${j2}</th><th>Resultado Global</th></tr></thead><tbody>`;
+      enfrentamientos.forEach(e => {
+        historialHTML += `<tr>`;
+        historialHTML += `<td>${e.fecha}</td>`;
+        if (e.mismoEquipo) {
+          // Calcular resultado global del equipo
+          const partido = partidosPorFecha[e.fecha];
+          const puntosEquipo = Number(partido.find(cols => cols[window.idxJugador] === j1)[window.idxPuntos]);
+          let texto = 'Empate';
+          if (puntosEquipo === 3) { texto = 'Victoria'; }
+          else if (puntosEquipo === 0) { texto = 'Derrota'; }
+          // Calcular goles totales del equipo
+          const golesEquipo = partido.filter(cols => Number(cols[window.idxPuntos]) === puntosEquipo).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+          // Calcular goles del rival
+          const puntosRival = [0,1,3].find(p => p !== puntosEquipo && partido.some(cols => Number(cols[window.idxPuntos]) === p));
+          const golesRival = partido.filter(cols => Number(cols[window.idxPuntos]) === puntosRival).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+          historialHTML += `<td colspan='2' style='color:blue;font-weight:bold;text-align:center;'>Mismo equipo</td>`;
+          historialHTML += `<td style='font-weight:bold;text-align:center;'>${texto} (${golesEquipo}-${golesRival})</td>`;
+        } else {
+          // Calcular goles de cada equipo
+          const partido = partidosPorFecha[e.fecha];
+          const puntos1 = Number(partido.find(cols => cols[window.idxJugador] === j1)[window.idxPuntos]);
+          const puntos2 = Number(partido.find(cols => cols[window.idxJugador] === j2)[window.idxPuntos]);
+          const goles1 = partido.filter(cols => Number(cols[window.idxJugador] === j1)).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+          const goles2 = partido.filter(cols => Number(cols[window.idxJugador] === j2)).reduce((acc, cols) => acc + Number(cols[idxGoles]), 0);
+          historialHTML += `<td style="color:${e.resultado1==='Victoria'?'green':e.resultado1==='Derrota'?'#d32f2f':'orange'};font-weight:bold;">${e.resultado1}</td>`;
+          historialHTML += `<td style="color:${e.resultado2==='Victoria'?'green':e.resultado2==='Derrota'?'#d32f2f':'orange'};font-weight:bold;">${e.resultado2}</td>`;
+          historialHTML += `<td style='font-weight:bold;text-align:center;'>${goles1}-${goles2}</td>`;
+        }
+        historialHTML += `</tr>`;
       });
-      html += `</tbody></table>`;
+      historialHTML += `</tbody></table>`;
+    } else {
+      historialHTML = `<div style="margin-top:1.5em;color:gray;">Nunca jugaron juntos en el mismo partido.</div>`;
     }
-    document.getElementById('comparadorHistorialDirecto').innerHTML = html;
+    estadisticasDiv.innerHTML = `
+      <div style="display:flex;justify-content:center;gap:3em;align-items:center;flex-wrap:wrap;">
+        <div style="min-width:180px;text-align:center;">
+          <h2 style="color:green;">${j1}</h2>
+          <div><b>${m1.partidos}</b> Partidos Jugados</div>
+          <div><b>${m1.puntos}</b> Puntos</div>
+          <div><b>${m1.goles}</b> Goles</div>
+          <div><b>${m1.difGol}</b> Diferencia de Gol</div>
+          <div><b>${pctVict1} %</b> % de Victorias</div>
+          <div><b>${pctAsist1} %</b> % de Asistencias</div>
+          <div style="margin-top:0.7em;"><span style="color:${colorPuntos1};font-weight:bold;">${promPuntos1}</span> <span style="font-size:0.95em;">Prom. Puntos/Partido</span></div>
+          <div><span style="color:${colorGoles1};font-weight:bold;">${promGoles1}</span> <span style="font-size:0.95em;">Prom. Goles/Partido</span></div>
+          <div style=\"margin-top:0.7em;\"><span style=\"color:${colorGoleador1};font-weight:bold;\">${vecesGoleador1}</span> <span style="font-size:0.95em;\">Veces Goleador del Partido</span></div>
+          <div><b>${calcularEfectividadGoles(j1, dataRows, idxJugador, idxGoles)}%</b> Efectividad de Goles</div>
+          <div><b>${calcularMaximoGoles(j1, dataRows, idxJugador, idxGoles)}</b> Máx. Goles en un Partido</div>
+        </div>
+        <div style="font-size:2em;font-weight:bold;">VS</div>
+        <div style="min-width:180px;text-align:center;">
+          <h2 style="color:#d32f2f;">${j2}</h2>
+          <div><b>${m2.partidos}</b> Partidos Jugados</div>
+          <div><b>${m2.puntos}</b> Puntos</div>
+          <div><b>${m2.goles}</b> Goles</div>
+          <div><b>${m2.difGol}</b> Diferencia de Gol</div>
+          <div><b>${pctVict2} %</b> % de Victorias</div>
+          <div><b>${pctAsist2} %</b> % de Asistencias</div>
+          <div style=\"margin-top:0.7em;\"><span style=\"color:${colorPuntos2};font-weight:bold;\">${promPuntos2}</span> <span style="font-size:0.95em;\">Prom. Puntos/Partido</span></div>
+          <div><span style=\"color:${colorGoles2};font-weight:bold;">${promGoles2}</span> <span style="font-size:0.95em;">Prom. Goles/Partido</span></div>
+          <div style=\"margin-top:0.7em;\"><span style=\"color:${colorGoleador2};font-weight:bold;\">${vecesGoleador2}</span> <span style="font-size:0.95em;\">Veces Goleador del Partido</span></div>
+          <div><b>${calcularEfectividadGoles(j2, dataRows, idxJugador, idxGoles)}%</b> Efectividad de Goles</div>
+          <div><b>${calcularMaximoGoles(j2, dataRows, idxJugador, idxGoles)}</b> Máx. Goles en un Partido</div>
+        </div>
+      </div>
+      ${resumenNumerico}
+      ${historialHTML}
+    `;
   }
   select1.onchange = mostrarComparacion;
   select2.onchange = mostrarComparacion;
