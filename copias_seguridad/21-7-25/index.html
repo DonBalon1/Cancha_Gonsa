@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancha Gonsa</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- NAVBAR MODERNO Y RESPONSIVE -->
+  <nav class="navbar">
+    <div class="navbar-brand" style="display:flex;align-items:center;gap:0.7em;">
+      <span class="navbar-logo">⚽</span>
+      <span class="navbar-title">Cancha Gonsa</span>
+      <div id="selectorAnioContainer" style="margin-left:1.5em;"></div>
+    </div>
+    <button class="navbar-toggle" id="navbarToggle" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="navbar-links" id="navbarLinks">
+      <li><a href="#tab-general" class="tab-btn active" data-tab="general">Tabla General</a></li>
+      <li><a href="#tab-goleadores" class="tab-btn" data-tab="goleadores">Goleadores</a></li>
+      <li><a href="#tab-asistencias" class="tab-btn" data-tab="asistencias">Asistencias</a></li>
+      <li><a href="#tab-historial" class="tab-btn" data-tab="historial">Historial</a></li>
+      <li><a href="#tab-comparador" class="tab-btn" data-tab="comparador">Comparador</a></li>
+      <li><a href="#tab-dashboard-jugador" class="tab-btn" data-tab="dashboard-jugador">Dashboard Jugador</a></li>
+    </ul>
+  </nav>
+
+
+
+  <section class="tabla tab-content" id="tab-general" style="display:block;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Tabla General</h1>
+    <div id="tablaPuntosTotales"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-goleadores" style="display:none;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Tabla de Goleadores</h1>
+    <div id="tablaGoleadores"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-asistencias" style="display:none;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Tribunal de Asistencias</h1>
+    <div id="tablaTribunalAsistencias"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-historial" style="display:none;">
+    <h2 class="titulo-pestana">Historial de Partidos</h2>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+      <!-- El selector de fechas se inyectará dinámicamente dentro de la tarjeta del partido -->
+      <div id="detallePartido"></div>
+    </div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-comparador" style="display:none;">
+    <h1 class="titulo-comparador">Comparador de Jugadores</h1>
+    <div class="comparador-controles" style="display:flex;justify-content:center;gap:2em;align-items:flex-start;flex-wrap:wrap;margin-bottom:2.5em;">
+      <div>
+        <label for="comparadorJugador1">Jugador 1:</label>
+        <select id="comparadorJugador1"></select>
+      </div>
+      <div>
+        <label for="comparadorJugador2">Jugador 2:</label>
+        <select id="comparadorJugador2"></select>
+      </div>
+      <div style="display:flex;align-items:end;">
+        <button id="comparadorRandomBtn" type="button" style="margin-left:1.2em;padding:0.5em 1.2em;font-size:1.08em;font-weight:600;background:linear-gradient(90deg,#ffd700 0%,#ffe066 100%);color:#23263a;border:none;border-radius:8px;box-shadow:0 2px 12px #ffd70033;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;">🎲 Al azar</button>
+      </div>
+    </div>
+    <div id="comparadorEstadisticas"></div>
+  </section>
+
+  <!-- NUEVA SECCIÓN DASHBOARD JUGADOR -->
+  <section class="tabla tab-content" id="tab-dashboard-jugador" style="display:none;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Dashboard Individual de Jugador</h1>
+    <div class="dashboard-jugador-controles" style="display:flex;justify-content:center;gap:2em;align-items:flex-start;flex-wrap:wrap;margin-bottom:2.5em;">
+      <div>
+        <label for="dashboardJugadorSelect">Selecciona un jugador:</label>
+        <select id="dashboardJugadorSelect"></select>
+      </div>
+    </div>
+    <!-- Tabla anual de estadísticas del jugador -->
+    <div id="dashboardJugadorTablaAnual" style="width:100%;max-width:520px;margin:0 auto 2em auto;"></div>
+    <div id="dashboardJugadorResumen" style="display:flex;flex-direction:column;align-items:center;gap:2em;"></div>
+    <div id="dashboardJugadorGraficos" style="margin-top:2em;"></div>
+  </section>
+
+  <script src="script.js"></script>
+  <script>
+    // Navbar toggle para móvil
+    document.getElementById('navbarToggle').onclick = function() {
+      document.getElementById('navbarLinks').classList.toggle('open');
+      this.classList.toggle('open');
+    };
+    // Tabs con navbar
+    document.querySelectorAll('.navbar-links a.tab-btn').forEach(btn => {
+      btn.onclick = function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.querySelectorAll('.navbar-links a.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const tabId = this.getAttribute('href');
+        document.querySelector(tabId).style.display = 'block';
+        window.scrollTo({top:0,behavior:'smooth'});
+      };
+    });
+  </script>
+</body>
+</html>

@@ -1,58 +1,34 @@
-// --- CONFIGURACIÓN ÚNICA DE MEDALLAS Y REGISTRO ---
-// Fuente única de verdad para niveles, nombres e iconos
-const medallasConfig = {
-  goles: {
-    titulo: 'Goles Totales',
-    icono: '⚽',
-    niveles: [
-      { nivel: 1, min: 3,   nombre: 'Madera',           icon: '⚽', colorClass: 'nivel-1' },
-      { nivel: 2, min: 15,  nombre: 'Bronce',           icon: '⚽', colorClass: 'nivel-2' },
-      { nivel: 3, min: 40,  nombre: 'Hierro',           icon: '⚽', colorClass: 'nivel-3' },
-      { nivel: 4, min: 80,  nombre: 'Plata',            icon: '⚽', colorClass: 'nivel-4' },
-      { nivel: 5, min: 120, nombre: 'Oro',              icon: '🏆', colorClass: 'nivel-5' },
-      { nivel: 6, min: 200, nombre: 'Diamante',         icon: '💎', colorClass: 'nivel-6' },
-      { nivel: 7, min: 500, nombre: 'Dios del Futbol',  icon: '⚡', colorClass: 'nivel-7' }
-    ]
-  },
-  partidos: {
-    titulo: 'Partidos Jugados',
-    icono: '📅',
-    niveles: [
-      { nivel: 1, min: 5,   nombre: 'Madera',              icon: '🎽', colorClass: 'nivel-1' },
-      { nivel: 2, min: 20,  nombre: 'Bronce',              icon: '🎽', colorClass: 'nivel-2' },
-      { nivel: 3, min: 50,  nombre: 'Hierro',              icon: '🎽', colorClass: 'nivel-3' },
-      { nivel: 4, min: 75,  nombre: 'Plata',               icon: '🎽', colorClass: 'nivel-4' },
-      { nivel: 5, min: 100, nombre: 'Oro',                 icon: '🏆', colorClass: 'nivel-5' },
-      { nivel: 6, min: 150, nombre: 'Diamante',            icon: '💎', colorClass: 'nivel-6' },
-      { nivel: 7, min: 300, nombre: 'Dueño del gimnasio',  icon: '⚡', colorClass: 'nivel-7' }
-    ]
-  },
-  victorias: {
-    titulo: 'Victorias Totales',
-    icono: '🏆',
-    niveles: [
-      { nivel: 1, min: 2,   nombre: 'Madera',              icon: '🏅', colorClass: 'nivel-1' },
-      { nivel: 2, min: 15,  nombre: 'Bronce',              icon: '🏅', colorClass: 'nivel-2' },
-      { nivel: 3, min: 30,  nombre: 'Hierro',              icon: '🏅', colorClass: 'nivel-3' },
-      { nivel: 4, min: 60,  nombre: 'Plata',               icon: '🏅', colorClass: 'nivel-4' },
-      { nivel: 5, min: 80,  nombre: 'Oro',                 icon: '🏆', colorClass: 'nivel-5' },
-      { nivel: 6, min: 100, nombre: 'Diamante',            icon: '💎', colorClass: 'nivel-6' },
-      { nivel: 7, min: 250, nombre: 'Máquina de Ganar',    icon: '⚡', colorClass: 'nivel-7' }
-    ]
-  }
+// --- REGISTRO DE LOGROS POR JUGADOR ---
+// Configuración de medallas por logro
+const registroLogrosConfig = {
+  goles: [
+    { nivel: 1, nombre: 'Madera', min: 3, max: 14 },
+    { nivel: 2, nombre: 'Bronce', min: 15, max: 39 },
+    { nivel: 3, nombre: 'Hierro', min: 40, max: 79 },
+    { nivel: 4, nombre: 'Plata', min: 80, max: 149 },
+    { nivel: 5, nombre: 'Oro', min: 150, max: 299 },
+    { nivel: 6, nombre: 'Diamante', min: 300, max: 599 },
+    { nivel: 7, nombre: 'Dios del Futbol', min: 600, max: Infinity }
+  ],
+  partidos: [
+    { nivel: 1, nombre: 'Madera', min: 5, max: 19 },
+    { nivel: 2, nombre: 'Bronce', min: 20, max: 49 },
+    { nivel: 3, nombre: 'Hierro', min: 50, max: 74 },
+    { nivel: 4, nombre: 'Plata', min: 75, max: 99 },
+    { nivel: 5, nombre: 'Oro', min: 100, max: 149 },
+    { nivel: 6, nombre: 'Diamante', min: 150, max: 299 },
+    { nivel: 7, nombre: 'Dueño del gimnasio', min: 300, max: Infinity }
+  ],
+  victorias: [
+    { nivel: 1, nombre: 'Madera', min: 2, max: 14 },
+    { nivel: 2, nombre: 'Bronce', min: 15, max: 29 },
+    { nivel: 3, nombre: 'Hierro', min: 30, max: 59 },
+    { nivel: 4, nombre: 'Plata', min: 60, max: 79 },
+    { nivel: 5, nombre: 'Oro', min: 80, max: 99 },
+    { nivel: 6, nombre: 'Diamante', min: 100, max: 249 },
+    { nivel: 7, nombre: 'Máquina de Ganar', min: 250, max: Infinity }
+  ]
 };
-
-// Construye el registro (min/max) a partir de medallasConfig
-const registroLogrosConfig = Object.fromEntries(Object.entries(medallasConfig).map(([clave, def]) => {
-  const niveles = def.niveles;
-  const config = niveles.map((n, i) => ({
-    nivel: n.nivel,
-    nombre: n.nombre,
-    min: n.min,
-    max: i < niveles.length - 1 ? niveles[i + 1].min - 1 : Infinity
-  }));
-  return [clave, config];
-}));
 
 
 function getRegistroJugadoresFromMetricas(metricasPorJugador) {
@@ -107,42 +83,17 @@ function renderRegistroLogros() {
       return valor >= medalla.min && valor <= medalla.max;
     });
     const color = coloresMedalla[medalla.nombre] || {bg:'#23263a',border:'#ffd700',text:'#ffd700'};
-    // Unidad para textos dinámicos
-    const unidad = filtro === 'goles' ? 'goles' : (filtro === 'partidos' ? 'partidos' : 'victorias');
     html += `<div style="background:#23263a;border-radius:12px;box-shadow:0 2px 12px ${color.border}55;padding:1em 1.2em;margin-bottom:1.2em;border:2.5px solid ${color.border};">
       <div style="font-size:1.35em;font-weight:900;letter-spacing:0.04em;margin-bottom:0.5em;text-shadow:0 2px 12px ${color.border}99,0 1px 8px #0003;color:${color.border};filter:brightness(1.15);">
         ${medalla.nombre}
       </div>
       <div style="color:#ffd700b0;font-size:1em;margin-bottom:0.5em;display:flex;flex-wrap:wrap;gap:1em;align-items:center;">
-        ${jugadores.length ? jugadores.map(j => {
-          const valor = j[filtro];
-          // Determinar nivel actual y siguiente para progreso
-          const niveles = config; // contiene min y max
-          let idxNivel = niveles.findIndex(n => valor >= n.min && valor <= n.max);
-          if (idxNivel === -1) idxNivel = 0;
-          const nivelActual = niveles[idxNivel];
-          const nivelSiguiente = niveles[idxNivel + 1] || null;
-          const faltan = nivelSiguiente ? (nivelSiguiente.min - valor) : 0;
-          let progresoPct = 1;
-          if (nivelSiguiente) {
-            progresoPct = (valor - nivelActual.min) / (nivelSiguiente.min - nivelActual.min);
-            if (progresoPct < 0) progresoPct = 0; if (progresoPct > 1) progresoPct = 1;
-          }
-          const progresoPctTxt = Math.round(progresoPct * 100);
-          const tooltipHtml = `\n${valor} ${unidad} totales\nNivel actual: ${nivelActual.nombre}${nivelSiguiente ? `\nFaltan ${faltan} para ${nivelSiguiente.nombre}` : '\nNivel máximo alcanzado'}\nProgreso: ${progresoPctTxt}%`;
-          return `
-          <span class="registro-jugador-medalla-item" style="position:relative;display:flex;align-items:center;gap:0.5em;background:#23263a99;padding:0.25em 0.7em;border-radius:8px;box-shadow:0 2px 8px ${color.border}22;">
+        ${jugadores.length ? jugadores.map(j => `
+          <span style="display:flex;align-items:center;gap:0.5em;background:#23263a99;padding:0.25em 0.7em;border-radius:8px;box-shadow:0 2px 8px ${color.border}22;">
             <img src="${j.img}" alt="${j.nombre}" onerror="this.onerror=null;this.src='img/jugadores/jugador-vacio.png';" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${color.border};box-shadow:0 1px 6px ${color.border}33;">
             <span style="color:${color.border};font-weight:600;">${j.nombre}</span>
-            <div class="registro-jugador-tooltip">
-              <div class="registro-jugador-tooltip-line nombre">${j.nombre}</div>
-              <div class="registro-jugador-tooltip-line valor"><b>${valor}</b> ${unidad}</div>
-              <div class="registro-jugador-tooltip-line nivel">Nivel: <b>${nivelActual.nombre}</b></div>
-              ${nivelSiguiente ? `<div class=\"registro-jugador-tooltip-line faltan\">Faltan <b>${faltan}</b> para <b>${nivelSiguiente.nombre}</b></div>` : `<div class=\"registro-jugador-tooltip-line max\">Nivel máximo</div>`}
-              <div class="registro-jugador-tooltip-line progreso"><div class="registro-jugador-progreso-bar"><span style="width:${progresoPct*100}%"></span></div><span class="registro-jugador-progreso-text">${progresoPctTxt}%</span></div>
-            </div>
-          </span>`;
-        }).join('') : `<span style=\"color:#ffd70055\">Ningún jugador</span>`}
+          </span>
+        `).join('') : `<span style=\"color:#ffd70055\">Ningún jugador</span>`}
       </div>
     </div>`;
   });
@@ -157,118 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
     filtro.selectedIndex = 0;
     renderRegistroLogros();
   }
-  // Render dinámico de las tarjetas informativas de logros
-  renderLogrosInfoTarjetas();
 });
-
-// Renderiza las tarjetas de información de logros (niveles) usando medallasConfig
-function renderLogrosInfoTarjetas() {
-  const contenedor = document.getElementById('logrosInfoTarjetasContainer');
-  if (!contenedor) return;
-  const colorNombre = {
-    'nivel-1': '#7c4a03',
-    'nivel-2': '#a97c50',
-    'nivel-3': '#bfc1c2',
-    'nivel-4': '#e0e0e0',
-    'nivel-5': '#ffd700',
-    'nivel-6': '#00e6e6',
-    'nivel-7': '#ffd700'
-  };
-  const tarjeta = (clave) => {
-    const def = medallasConfig[clave];
-    const niveles = def.niveles;
-    const iconoTitulo = def.icono;
-    const unidad = clave === 'goles' ? 'goles' : (clave === 'partidos' ? 'partidos' : 'victorias');
-    const unidadAbrev = clave === 'goles' ? 'G' : (clave === 'partidos' ? 'P' : 'V');
-    const subtitulo = clave === 'goles' ? 'Suma todos los goles que hiciste en la historia del torneo.'
-                    : clave === 'partidos' ? 'Cuenta todos los partidos en los que participaste, sin importar el resultado.'
-                    : 'Acumula todas las victorias que conseguiste a lo largo del torneo.';
-    const grid = niveles.map(n => {
-      const usarAbrev = ['nivel-5','nivel-6','nivel-7'].includes(n.colorClass);
-      const unidadMostrar = usarAbrev ? unidadAbrev : unidad;
-      return `
-      <div class="dashboard-jugador-medalla logros ${n.colorClass}">
-        <span style="font-size:1.3em; margin-top:0.3em;">${n.icon}</span>
-        <div class="medalla-nivel-nombre ${n.colorClass}"
-             style="font-size:0.5em;line-height:1.3;text-align:center;color:${colorNombre[n.colorClass]};max-width:90px;">
-          <span class="medalla-nombre" title="${n.nombre}">${n.nombre}</span>
-          <span class="medalla-umbral" style="display:block;font-size:1.0em;color:#ffd700b0;">${n.min} ${unidadMostrar}</span>
-        </div>
-      </div>
-    `;}).join('');
-    return `
-      <div class="logro-tarjeta" style="background:#23263a;border-radius:14px;box-shadow:0 2px 12px #ffd70022;padding:1.4em 1.3em 5.6em 1.3em;margin-bottom:${clave==='partidos' ? '2.7em' : '0.5em'};">
-        <div style="display:flex;align-items:center;gap:1em;margin-bottom:0.7em;">
-          <span style="font-size:2.1em;">${iconoTitulo}</span>
-          <span style="font-size:1.18em;font-weight:700;color:#ffd700;">${def.titulo}</span>
-        </div>
-        <div style="color:#ffd700b0;font-size:1em;margin-bottom:1em;">${subtitulo}</div>
-        <div style="display:flex;gap:1em;justify-content:center;flex-wrap:wrap;">
-          <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:1em;justify-items:center;width:100%;max-width:800px;">
-            ${grid}
-          </div>
-        </div>
-      </div>
-    `;
-  };
-  contenedor.innerHTML = `
-    ${tarjeta('goles')}
-    ${tarjeta('partidos')}
-    ${tarjeta('victorias')}
-  `;
-}
 // (Lógica de medallas escalables movida dentro de la función renderDashboardJugador)
 // URL del CSV publicado de Google Sheets
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQT1Nu2BTvja759foXvBs5Digg77UesBBgfpaUNVvNW92pQLckEE4Z_HZU5OmDVYvH6_MgeFqq6HRqz/pub?gid=1609934683&single=true&output=csv';
-
-// Parser CSV simple que soporta campos entre comillas y comillas escapadas ""
-function parseCSV(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-  const rows = [];
-  for (let line of lines) {
-    const row = [];
-    let cur = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') { // comilla escapada
-          cur += '"';
-          i++; // saltar la segunda comilla
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (ch === ',' && !inQuotes) {
-        row.push(cur);
-        cur = '';
-      } else {
-        cur += ch;
-      }
-    }
-    row.push(cur);
-    rows.push(row);
-  }
-  return rows;
-}
-
-// Cache local (localStorage) para el CSV para mejorar tiempo de carga y evitar sobrecargar Sheets
-async function fetchCSVWithCache(url, cacheKey = 'csvCache', ttlMs = 5 * 60 * 1000) {
-  try {
-    const raw = localStorage.getItem(cacheKey);
-    if (raw) {
-      const { ts, data } = JSON.parse(raw);
-      if (typeof ts === 'number' && Date.now() - ts < ttlMs && typeof data === 'string' && data.length) {
-        return data;
-      }
-    }
-  } catch (_) { /* ignorar problemas de localStorage */ }
-  const resp = await fetch(url);
-  const text = await resp.text();
-  try {
-    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: text }));
-  } catch (_) { /* almacenamiento puede fallar (modo privado, cuota, etc.) */ }
-  return text;
-}
 
 // --- NUEVO: Selector de año global ---
 let anioSeleccionado = null;
@@ -317,7 +160,6 @@ function renderSelectorAnio(anios) {
   sel.value = anioSeleccionado || anios[0];
   sel.onchange = function() {
     anioSeleccionado = this.value;
-    try { localStorage.setItem('anioSeleccionado', anioSeleccionado); } catch(_) {}
     filtrarYRenderizarPorAnio();
   };
 }
@@ -436,18 +278,17 @@ function filtrarYRenderizarPorAnio() {
   renderTablaGoleadores(window.metricasPorJugador);
   renderTribunalAsistencias(dataFiltrada, window.idxJugador, window.idxFecha);
   renderHistorialPartidos(dataFiltrada, window.idxFecha, window.idxJugador, window.idxGoles, window.idxPuntos);
-  // Render calendario inicial (usa mismo dataFiltrada)
-  try { renderHistorialCalendario(dataFiltrada, window.idxFecha); } catch(e) { console.warn('Calendario no disponible aún', e); }
   renderComparadorJugadores(window.metricasPorJugador);
   renderDashboardJugador(window.metricasPorJugador);
 }
 
 // Modificar el fetch principal para detectar años y renderizar el selector
-fetchCSVWithCache(csvUrl, 'cancha_gonsa_csv_v1', 5 * 60 * 1000)
+fetch(csvUrl)
+  .then(response => response.text())
   .then(csv => {
-    const rows = parseCSV(csv.trim());
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
+    const rows = csv.trim().split('\n');
+    const headers = rows[0].split(',');
+    const dataRows = rows.slice(1).map(row => row.split(','));
     // Calcular cantidad de fechas únicas (partidos totales)
     const idxFecha = headers.findIndex(h => h.trim().toLowerCase() === 'fecha');
     // Detectar años disponibles
@@ -462,13 +303,7 @@ fetchCSVWithCache(csvUrl, 'cancha_gonsa_csv_v1', 5 * 60 * 1000)
       aniosSet.add(year);
     });
     aniosDisponibles = Array.from(aniosSet).sort();
-    // Intentar restaurar selección previa
-    const storedAnio = (() => { try { return localStorage.getItem('anioSeleccionado'); } catch(_) { return null; } })();
-    if (storedAnio && aniosDisponibles.includes(storedAnio)) {
-      anioSeleccionado = storedAnio;
-    } else {
-      anioSeleccionado = aniosDisponibles[aniosDisponibles.length - 1]; // Por defecto el más reciente
-    }
+    anioSeleccionado = aniosDisponibles[aniosDisponibles.length - 1]; // Por defecto el más reciente
     window.dataRowsOriginal = dataRows;
     window.idxFecha = idxFecha;
     window.idxJugador = headers.findIndex(h => h.trim().toLowerCase() === 'jugador');
@@ -525,22 +360,15 @@ function resultadoAEmoji(resultado) {
 }
 
 function getUltimosGolesPorJugador(dataRows, idxJugador, idxGoles, cantidad = 5) {
-  // Para cada partido: valor neto = goles a favor - autogoles (puede ser negativo)
-  const idxAutogoles = typeof window.idxAutogoles === 'number' ? window.idxAutogoles : -1;
+  // Agrupa los partidos de cada jugador y devuelve los últimos goles
   const golesPorJugador = {};
   dataRows.forEach(cols => {
     const jugador = cols[idxJugador];
-    let gf = Number(cols[idxGoles]);
-    if (isNaN(gf)) gf = 0;
-    let own = 0;
-    if (idxAutogoles >= 0) {
-      own = Number(cols[idxAutogoles]);
-      if (isNaN(own)) own = 0;
-    }
-    const net = gf - own; // puede ser negativo
+    const goles = Number(cols[idxGoles]);
     if (!golesPorJugador[jugador]) golesPorJugador[jugador] = [];
-    golesPorJugador[jugador].push(net);
+    golesPorJugador[jugador].push(isNaN(goles) ? 0 : goles);
   });
+  // Devuelve los últimos N goles (más recientes al final)
   const ultimosGoles = {};
   Object.entries(golesPorJugador).forEach(([jugador, goles]) => {
     ultimosGoles[jugador] = goles.slice(-cantidad);
@@ -549,12 +377,11 @@ function getUltimosGolesPorJugador(dataRows, idxJugador, idxGoles, cantidad = 5)
 }
 
 function golesAColor(goles) {
-  // Valor puede ser negativo (autogoles netos), cero o positivo.
-  if (goles < 0) return `<span class="dot dot-red"></span><span class="dot-num" style="color:#d32f2f;">${goles}</span>`; // negativos: rojo estándar
-  if (goles === 0) return '<span class="dot dot-gray"></span><span class="dot-num" style="color:#9ea5ad;">0</span>';
+  // Devuelve un span con círculo y número minimalista según la cantidad de goles
+  if (goles === 0) return '<span class="dot dot-red"></span><span class="dot-num" style="color:#d32f2f;">0</span>';
   if (goles === 1) return '<span class="dot dot-yellow"></span><span class="dot-num" style="color:#b59f00;">1</span>';
-  // 2+ goles
-  return `<span class="dot dot-green"></span><span class="dot-num" style="color:#388e3c;">${goles}</span>`;
+  if (goles >= 2) return `<span class="dot dot-green"></span><span class="dot-num" style="color:#388e3c;">${goles}</span>`;
+  return '';
 }
 
 function calcularRanking(metricasPorJugador) {
@@ -654,14 +481,9 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   } else {
     filtroDiv.style.alignItems = 'center'; // <-- asegurar alineación si ya existe
   }
-    // Mantener el valor del input entre renderizados
-    // Valor por defecto cambiado de 0 a 5
-    // Restaurar desde localStorage si existe
-    let partidosMinimos = 5;
-    try {
-      const saved = localStorage.getItem('minPartidosGeneral');
-      if (saved !== null && saved !== '' && !Number.isNaN(Number(saved))) partidosMinimos = Number(saved);
-    } catch(_) {}
+  // Mantener el valor del input entre renderizados
+  // Valor por defecto cambiado de 0 a 5
+  let partidosMinimos = 5;
   const inputExistente = filtroDiv.querySelector('#inputPartidosMinimos');
   if (inputExistente) {
     partidosMinimos = Number(inputExistente.value) || 0;
@@ -675,7 +497,6 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   const inputMin = filtroDiv.querySelector('#inputPartidosMinimos');
   inputMin.value = partidosMinimos;
   inputMin.oninput = function() {
-  try { localStorage.setItem('minPartidosGeneral', String(this.value)); } catch(_) {}
     renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResultados, ultimosGoles);
   };
 
@@ -685,34 +506,8 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
     tablaCont.classList.add('compact');
   }
 
-  // --- Renderizar la tabla con doble header (grupos + subcolumnas) ---
-  let html = `<table class='tabla-general'><thead>
-    <tr class='thead-group'>
-      <th rowspan="2" class='col-pos'>#</th>
-      <th rowspan="2" class='col-avatar'></th>
-      <th rowspan="2" class='col-jugador'>Jugador</th>
-      <th rowspan="2" class='puntos' title="Puntos Totales">Puntos</th>
-      <th colspan="3" class='grp grp-resultados' title="Victorias / Empates / Derrotas">Resultados</th>
-      <th rowspan="2" class='col-pj' title="Partidos Jugados">PJ</th>
-      <th colspan="3" class='grp grp-produccion' title="Producción ofensiva">Producción</th>
-      <th colspan="2" class='grp grp-participacion' title="Participación / Presencia">Participación</th>
-      <th colspan="2" class='grp grp-promedios' title="Promedios por Partido">Promedios</th>
-      <th rowspan="2" class='col-rend' title="Últimos resultados">Rendimiento</th>
-      <th rowspan="2" class='col-goleometro' title="Goles recientes">Goleómetro</th>
-    </tr>
-    <tr class='thead-sub'>
-      <th class='col-g' title='Ganados'>G</th>
-      <th class='col-e' title='Empatados'>E</th>
-      <th class='col-p' title='Perdidos'>P</th>
-      <th class='col-goles' title='Goles Totales'>Goles</th>
-      <th class='col-efectgol' title='Efectividad de Gol (partidos con gol / PJ)'>Efect. Gol</th>
-      <th class='col-difgol' title='Diferencial de Gol'>Dif. Gol</th>
-      <th class='col-pctvic' title='% Victorias'>% Victorias</th>
-      <th class='col-pctpres' title='% Presencias'>% Presencias</th>
-      <th class='col-pxp' title='Promedio de Puntos por Partido'>PxP</th>
-      <th class='col-gxp' title='Promedio de Goles por Partido'>GxP</th>
-    </tr>
-  </thead><tbody>`;
+  // --- Renderizar la tabla (sin caption) ---
+  let html = `<table><thead><tr><th style='width:44px'></th><th>#</th><th>Jugador</th><th class='puntos'>Puntos</th><th class='col-g'>G</th><th class='col-e'>E</th><th class='col-p'>P</th><th>PJ</th><th>Goles</th><th>Dif. Gol</th><th>% Victorias</th><th>% Presencias</th><th>PxP</th><th>GxP</th><th>Rendimiento</th><th>Goleómetro</th></tr></thead><tbody>`;
   // Filtrar por partidos mínimos
   const jugadoresFiltrados = Object.entries(metricasPorJugador).filter(([_, m]) => m.partidos >= partidosMinimos);
   // Ordenar por puntos totales de forma decreciente
@@ -751,19 +546,6 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   const puntosArray = jugadoresOrdenados.map(([_, m]) => m.puntos);
   const maxPuntos = Math.max(...puntosArray);
   const minPuntos = Math.min(...puntosArray);
-  // Precalcular partidos con gol por jugador (evita filtrar por jugador cada vez)
-  const dataRowsAll = window.dataRowsOriginal || [];
-  const idxJug = window.idxJugador;
-  const idxGol = window.idxGoles;
-  const partidosConGol = {};
-  if (idxJug!=null && idxGol!=null) {
-    for (const r of dataRowsAll) {
-      const j = r[idxJug];
-      const g = Number(r[idxGol])||0;
-  if (!partidosConGol[j]) partidosConGol[j] = 0;
-  if (g > 0) partidosConGol[j]++;
-    }
-  }
   jugadoresOrdenados.forEach(([jugador, m], idx) => {
     if (prevPuntos !== null && m.puntos === prevPuntos) {
       repeticiones++;
@@ -807,11 +589,9 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
     // Imagen con fallback
     const imgHtml = `<img src="${rutaImg}" alt="${jugador}" onerror="this.onerror=null;this.src='${rutaImgVacia}';" style="width:38px;height:38px;object-fit:cover;border-radius:50%;box-shadow:0 1px 4px #0002;">`;
 
-  html += `<tr style=\"--row-delay:${rowDelay}s\">`;
-  // Posición primero, avatar después
-  html += `<td class=\"${claseTop}\">${posicion}</td>`;
-  html += `<td style='text-align:center;'>${imgHtml}</td>`;
-  html += `<td>${jugador}</td>`;
+    html += `<tr style=\"--row-delay:${rowDelay}s\">`;
+    html += `<td style='text-align:center;'>${imgHtml}</td>`;
+    html += `<td class=\"${claseTop}\">${posicion}</td><td>${jugador}</td>`;
   // Puntos sin podio
   html += `<td class='puntos'>${m.puntos}</td>`;
     html += `<td class='col-g'>${m.ganados}</td><td class='col-e'>${m.empatados}</td><td class='col-p'>${m.perdidos}</td>`;
@@ -819,14 +599,6 @@ function renderPuntosTotales(metricasPorJugador, partidosTotales, ultimosResulta
   html += `<td>${m.partidos}</td>`;
   // Goles sin podio
   html += `<td>${m.goles}</td>`;
-    // Efectividad de gol: % de partidos en los que marcó >=1 gol
-    let efectGolPctNum = 0;
-    if (m.partidos>0) {
-      const pcg = partidosConGol[jugador]||0;
-      efectGolPctNum = Math.round((pcg / m.partidos)*100);
-    }
-    const efectGolStr = efectGolPctNum + '%';
-    html += `<td class='${clasePorcentaje(efectGolPctNum)}' title='Partidos con al menos un gol / Partidos jugados'>${efectGolStr}</td>`;
     html += `<td class='${claseDifGol(Number(m.difGol||0))}'>${m.difGol || 0}</td>`;
     html += `<td class='${clasePorcentaje(Number(porcentajeVictorias.replace('%','')))}'>${porcentajeVictorias}</td>`;
     html += `<td class='${clasePorcentaje(Number(porcentajePresencias.replace('%','')))}'>${porcentajePresencias}</td>`;
@@ -937,12 +709,7 @@ function renderTablaGoleadores(metricasPorJugador) {
   }
   // Mantener el valor del input entre renderizados
   // Valor por defecto cambiado de 0 a 5 (goleadores)
-  // Restaurar desde localStorage si existe
   let partidosMinimos = 5;
-  try {
-    const saved = localStorage.getItem('minPartidosGoleadores');
-    if (saved !== null && saved !== '' && !Number.isNaN(Number(saved))) partidosMinimos = Number(saved);
-  } catch(_) {}
   const inputExistente = filtroDiv.querySelector('#inputPartidosMinimosGoleadores');
   if (inputExistente) {
     partidosMinimos = Number(inputExistente.value) || 0;
@@ -956,7 +723,6 @@ function renderTablaGoleadores(metricasPorJugador) {
   const inputMin = filtroDiv.querySelector('#inputPartidosMinimosGoleadores');
   inputMin.value = partidosMinimos;
   inputMin.oninput = function() {
-  try { localStorage.setItem('minPartidosGoleadores', String(this.value)); } catch(_) {}
     renderTablaGoleadores(metricasPorJugador);
   };
 
@@ -973,8 +739,7 @@ function renderTablaGoleadores(metricasPorJugador) {
   const idxGoles = window.idxGoles;
 
   // Encabezados simplificados, columna Goles con clase especial
-  // Reordenado: posición luego avatar
-  let html = '<table><thead><tr><th>#</th><th style="width:44px"></th><th>Jugador</th><th class="col-goles">Goles</th><th>PJ</th><th>Veces goleador</th><th>GxP</th><th>Dif. Gol</th><th>Efect. Gol</th></tr></thead><tbody>';
+  let html = '<table><thead><tr><th style="width:44px"></th><th>#</th><th>Jugador</th><th class="col-goles">Goles</th><th>PJ</th><th>Veces goleador</th><th>GxP</th><th>Dif. Gol</th><th>Efect. Gol</th></tr></thead><tbody>';
   // Filtrar por partidos mínimos
   const jugadoresFiltrados = Object.entries(metricasPorJugador).filter(([_, m]) => m.partidos >= partidosMinimos);
   // Ordenar por goles totales de forma decreciente
@@ -1016,32 +781,16 @@ function renderTablaGoleadores(metricasPorJugador) {
     const rutaImgVacia = `img/jugadores/jugador-vacio.png`;
     const imgHtml = `<img src="${rutaImg}" alt="${jugador}" onerror="this.onerror=null;this.src='${rutaImgVacia}';" style="width:38px;height:38px;object-fit:cover;border-radius:50%;box-shadow:0 1px 4px #0002;">`;
 
-    // Barra horizontal proporcional con número separado (evita superposición)
+    // Barra horizontal proporcional
     const barraWidth = maxGoles > 0 ? Math.round((m.goles / maxGoles) * 100) : 0;
-  const GOLES_BAR_MODE = 'outside-left'; // 'inside' o 'outside-left'
-    let barraHTML = '';
-    if (GOLES_BAR_MODE === 'inside') {
-      barraHTML = `
-        <div class="goles-bar-wrapper mode-inside" title="${m.goles} goles (máx ${maxGoles})">
-          <div class="goles-bar-track">
-            <div class="goles-bar-fill" style="width:${barraWidth}%;"></div>
-            <span class="goles-bar-num inside">${m.goles}</span>
-          </div>
-        </div>`;
-    } else {
-      // outside-left
-      barraHTML = `
-        <div class="goles-bar-wrapper mode-outside-left" title="${m.goles} goles (máx ${maxGoles})">
-          <span class="goles-bar-num static-outside">${m.goles}</span>
-          <div class="goles-bar-track">
-            <div class="goles-bar-fill" style="width:${barraWidth}%;"></div>
-          </div>
-        </div>`;
-    }
-  html += `<tr style=\"--row-delay:${rowDelay}s\">`;
-  html += `<td class=\"${claseTop}\">${posicion}</td>`;
-  html += `<td style='text-align:center;'>${imgHtml}</td>`;
-  html += `<td>${jugador}</td><td class=\"col-goles\">${barraHTML}</td><td>${m.partidos}</td><td>${vecesGoleador}</td><td class='${claseGxP(Number(golesPorPartido))}'>${golesPorPartido}</td><td class='${claseDifGol(Number(m.difGol||0))}'>${m.difGol || 0}</td><td class='${clasePorcentaje(Number(efectividadGol))}'>${efectividadGol}%</td></tr>`;
+    const barraColor = '#ffd700'; // amarillo
+    const barraBg = '#23263a44';
+    const colorTexto = '#fff';
+    const textShadow = '0 1px 4px #23263a, 0 0 2px #000';
+    const barraHTML = `<div style=\"background:${barraBg};border-radius:6px;height:1.1em;width:100%;position:relative;\"><div style=\"background:${barraColor};height:100%;width:${barraWidth}%;border-radius:6px;opacity:0.92;\"></div><span class='goles-barra-num' style=\"position:absolute;left:50%;top:0;width:100%;text-align:center;font-weight:700;color:${colorTexto};font-size:1em;transform:translateX(-50%);z-index:2;text-shadow:${textShadow};\">${m.goles}</span></div>`;
+    html += `<tr style=\"--row-delay:${rowDelay}s\">`;
+    html += `<td style='text-align:center;'>${imgHtml}</td>`;
+    html += `<td class=\"${claseTop}\">${posicion}</td><td>${jugador}</td><td class=\"col-goles\">${barraHTML}</td><td>${m.partidos}</td><td>${vecesGoleador}</td><td class='${claseGxP(Number(golesPorPartido))}'>${golesPorPartido}</td><td class='${claseDifGol(Number(m.difGol||0))}'>${m.difGol || 0}</td><td class='${clasePorcentaje(Number(efectividadGol))}'>${efectividadGol}%</td></tr>`;
   });
   html += '</tbody></table>';
   tablaDiv.innerHTML = html;
@@ -1084,10 +833,6 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
     filtroDiv.style.alignItems = 'center';
   }
   let partidosMinimosPres = 5; // valor por defecto 5 (igual que otras pestañas)
-  try {
-    const saved = localStorage.getItem('minPartidosPresencias');
-    if (saved !== null && saved !== '' && !Number.isNaN(Number(saved))) partidosMinimosPres = Number(saved);
-  } catch(_) {}
   const inputExistentePres = filtroDiv.querySelector('#inputPartidosMinimosPresencias');
   if (inputExistentePres) {
     partidosMinimosPres = Number(inputExistentePres.value) || 0;
@@ -1100,7 +845,7 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   `;
   const inputMinPres = filtroDiv.querySelector('#inputPartidosMinimosPresencias');
   inputMinPres.value = partidosMinimosPres;
-  inputMinPres.oninput = () => { try { localStorage.setItem('minPartidosPresencias', String(inputMinPres.value)); } catch(_) {} renderTribunalAsistencias(dataRows, idxJugador, idxFecha); };
+  inputMinPres.oninput = () => renderTribunalAsistencias(dataRows, idxJugador, idxFecha);
 
   // Obtener todas las fechas únicas y ordenarlas cronológicamente
   const fechas = Array.from(new Set(dataRows.map(cols => cols[idxFecha])));
@@ -1133,19 +878,19 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   // Ordenar de mayor a menor % de asistencias
   jugadoresConAsistencias.sort((a, b) => b.porcentaje - a.porcentaje);
 
-  // Renderizar la tabla con columna de posición a la izquierda
+  // Renderizar la tabla con columna de imagen y encabezado de fechas
   let html = '<table>';
   html += '<thead>';
   html += '<tr>';
-  html += '<th rowspan="2" class="col-pos" title="Ranking">#</th>';
   html += '<th style="width:44px" rowspan="2"></th>';
   html += '<th rowspan="2">Jugador</th>';
-  html += '<th rowspan="2" title="Asistencias y porcentaje sobre total">Asist. / %</th>';
+  html += '<th rowspan="2" style="text-align:center;">#</th>';
+  html += '<th rowspan="2">% Presencias</th>';
   html += `<th colspan="${fechas.length}">Historial de Presencias</th>`;
   html += '</tr>';
-  // Fila de fechas (placeholders para las 5 columnas con rowspan)
+  // Fila de fechas
   html += '<tr>';
-  for (let i = 0; i < 5; i++) html += '<th style="display:none"></th>';
+  for (let i = 0; i < 4; i++) html += '<th style="display:none"></th>';
   fechas.forEach(fecha => {
     html += `<th style="font-size:0.9em;white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);padding:2px 0;max-width:1.5em;color:var(--color-secundario);">${fecha}</th>`;
   });
@@ -1185,11 +930,9 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
     const rutaImgVacia = `img/jugadores/jugador-vacio.png`;
     const imgHtml = `<img src="${rutaImg}" alt="${jugador}" onerror="this.onerror=null;this.src='${rutaImgVacia}';" style="width:38px;height:38px;object-fit:cover;border-radius:50%;box-shadow:0 1px 4px #0002;">`;
 
-  html += `<tr style="--row-delay:${rowDelay}s">`;
-  html += `<td class="${claseTop}" style='text-align:center;'>${posicion}</td>`;
-  html += `<td style='text-align:center;'>${imgHtml}</td>`;
-  html += `<td>${jugador}</td>`;
-  html += `<td class="${clasePorcentaje(porcentajeNum)}">${asistencias} de ${total} <span style='opacity:.75;font-weight:600;'>(${porcentajeStr})</span></td>`;
+    html += `<tr style="--row-delay:${rowDelay}s">`;
+    html += `<td style='text-align:center;'>${imgHtml}</td>`;
+    html += `<td>${jugador}</td><td class="${claseTop}">${asistencias} de ${total}</td><td class="${clasePorcentaje(porcentajeNum)}">${porcentajeStr}</td>`;
     fechas.forEach(fecha => {
       if (presenciasPorJugador[jugador].has(fecha)) {
         html += '<td style="text-align:center;">🟢</td>';
@@ -1473,204 +1216,6 @@ function renderHistorialPartidos(dataRows, idxFecha, idxJugador, idxGoles, idxPu
   if (fechas.length > 0) mostrarDetalle(fechas[fechas.length - 1]);
 }
 
-// === HISTORIAL: CALENDARIO ===
-function renderHistorialCalendario(dataRows, idxFecha, navState) {
-  const cont = document.getElementById('historialCalendarioContainer');
-  if (!cont) return;
-  const nav = document.getElementById('historialCalendarioNav');
-  // Agrupar por fecha (clave original) y también por fecha normalizada yyyymmdd
-  const porFecha = {};
-  dataRows.forEach(cols => {
-    const f = cols[idxFecha];
-    if (!porFecha[f]) porFecha[f] = [];
-    porFecha[f].push(cols);
-  });
-  const fechas = Object.keys(porFecha);
-  // Mapear clave normalizada -> filas y mantener clave original para esa normalizada
-  function parseFechaGen(f) {
-    const d = f.split(/[\/-]/).map(n=>parseInt(n,10)); // dd-mm-yy
-    let [dd,mm,yy] = d;
-    if (yy < 100) yy = 2000 + yy;
-    return new Date(yy, mm-1, dd);
-  }
-  const porFechaNorm = {};
-  const originalKeyForNorm = {};
-  fechas.forEach(k => {
-    const dt = parseFechaGen(k);
-    if (!isNaN(dt)) {
-      const y = dt.getFullYear();
-      const m = String(dt.getMonth()+1).padStart(2,'0');
-      const d = String(dt.getDate()).padStart(2,'0');
-      const norm = `${y}${m}${d}`;
-      porFechaNorm[norm] = porFecha[k];
-      originalKeyForNorm[norm] = k;
-    }
-  });
-  if (fechas.length === 0) {
-    if (nav) nav.innerHTML = '';
-    cont.innerHTML = '<div style="text-align:center;color:#b0b0b0;">No hay partidos en el período seleccionado.</div>';
-    return;
-  }
-  // Intentar detectar mes/año dominante de las fechas
-  // parseFechaGen ya definido arriba
-  const fechasDate = fechas.map(parseFechaGen).sort((a,b)=>a-b);
-  let base;
-  if (navState && typeof navState.year==='number' && typeof navState.month==='number') {
-    base = new Date(navState.year, navState.month, 1);
-  } else {
-    base = fechasDate[fechasDate.length-1]; // mes del último partido por defecto
-  }
-  const year = base.getFullYear();
-  const month = base.getMonth();
-  const primerDiaMes = new Date(year, month, 1);
-  const ultimoDiaMes = new Date(year, month+1, 0);
-  const inicioGrid = new Date(primerDiaMes);
-  inicioGrid.setDate(primerDiaMes.getDate() - ((primerDiaMes.getDay()+6)%7)); // semana inicia lunes
-  const finGrid = new Date(ultimoDiaMes);
-  finGrid.setDate(ultimoDiaMes.getDate() + (6 - ((ultimoDiaMes.getDay()+6)%7)));
-  // Cabecera mes
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  // Nav superior
-  if (nav) {
-    const aniosSet = new Set(fechasDate.map(d=>d.getFullYear()));
-    // Asegurar que el año actualmente visualizado exista en el selector
-    if (!aniosSet.has(year)) aniosSet.add(year);
-    const anios = Array.from(aniosSet).sort((a,b)=>a-b);
-    const mesesOpts = meses.map((m,i)=>`<option value="${i}" ${i===month?'selected':''}>${m}</option>`).join('');
-    const aniosOpts = anios.map(a=>`<option value="${a}" ${a===year?'selected':''}>${a}</option>`).join('');
-    nav.innerHTML = `
-      <button id="calPrevBtn">◀</button>
-      <select id="calMesSelect">${mesesOpts}</select>
-      <select id="calAnioSelect">${aniosOpts}</select>
-      <button id="calNextBtn">▶</button>
-    `;
-    const setState = (y,m)=>renderHistorialCalendario(dataRows, idxFecha, {year:y, month:m});
-    document.getElementById('calPrevBtn').onclick = ()=>{
-      const d = new Date(year, month-1, 1);
-      setState(d.getFullYear(), d.getMonth());
-    };
-    document.getElementById('calNextBtn').onclick = ()=>{
-      const d = new Date(year, month+1, 1);
-      setState(d.getFullYear(), d.getMonth());
-    };
-    document.getElementById('calMesSelect').onchange = (e)=>{
-      setState(year, parseInt(e.target.value,10));
-    };
-    document.getElementById('calAnioSelect').onchange = (e)=>{
-      setState(parseInt(e.target.value,10), month);
-    };
-  }
-
-  let html = '';
-  html += `<div class="historial-cal-header"><div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div></div>`;
-  html += `<div class="historial-cal-grid">`;
-  for (let d = new Date(inicioGrid); d <= finGrid; d.setDate(d.getDate()+1)) {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    const dd = String(d.getDate()).padStart(2,'0');
-    const norm = `${yyyy}${mm}${dd}`;
-    const filas = porFechaNorm[norm];
-    const fueraMes = d.getMonth() !== month;
-    const clases = ['historial-cal-day'];
-    if (filas && filas.length) clases.push('partido');
-    if (fueraMes) clases.push('fuera-mes');
-    const originalKey = filas ? (originalKeyForNorm[norm] || '') : '';
-    html += `<div class=\"${clases.join(' ')}\" data-fecha=\"${originalKey}\">`;
-    html += `<span class="fecha-label">${d.getDate()}</span>`;
-    if (filas) {
-      // Calcular marcador global con autogoles para mostrar (si hay victoria/empate)
-      let marcador = '';
-      try {
-        const idxPuntos = window.idxPuntos, idxGoles = window.idxGoles, idxAutogoles = typeof window.idxAutogoles==='number'?window.idxAutogoles:-1;
-        const ganadores = filas.filter(c=>Number(c[idxPuntos])===3);
-        const perdedores = filas.filter(c=>Number(c[idxPuntos])===0);
-        const empatados = filas.filter(c=>Number(c[idxPuntos])===1);
-        const suma = (arr, idx)=>arr.reduce((a,c)=>a+Number(c[idx]||0),0);
-        const sumaAuto = (arr)=> idxAutogoles>=0? arr.reduce((a,c)=>a+Number(c[idxAutogoles]||0),0):0;
-        if (ganadores.length && perdedores.length) {
-          const gProp = suma(ganadores, idxGoles), pProp = suma(perdedores, idxGoles);
-          const gAuto = sumaAuto(ganadores), pAuto = sumaAuto(perdedores);
-          const g = gProp + pAuto; const p = pProp + gAuto;
-          marcador = `${g}-${p}`;
-        } else if (empatados.length) {
-          const mitad = Math.ceil(empatados.length/2);
-          const eq1 = empatados.slice(0,mitad), eq2 = empatados.slice(mitad);
-          const e1 = suma(eq1, idxGoles) + sumaAuto(eq2);
-          const e2 = suma(eq2, idxGoles) + sumaAuto(eq1);
-          marcador = `${e1}-${e2}`;
-        }
-      } catch(_) {}
-      // Mostrar marcador centrado y lista de ganadores; sin badge de cantidad de jugadores
-      if (marcador) html += `<span class=\"cal-res\">${marcador}</span>`;
-      // Lista de ganadores (nombres abreviados) si hubo un ganador claro
-      try {
-        const idxPuntos = window.idxPuntos, idxJugador = window.idxJugador;
-        const idxGoles = window.idxGoles, idxAutogoles = typeof window.idxAutogoles==='number'?window.idxAutogoles:-1;
-        const ganadores = filas.filter(c=>Number(c[idxPuntos])===3);
-        const perdedores = filas.filter(c=>Number(c[idxPuntos])===0);
-        const empatados = filas.filter(c=>Number(c[idxPuntos])===1);
-        if (ganadores.length && perdedores.length) {
-          // Mostrar nombres ordenados por goles desc (propios)
-          const jugadoresOrd = [...ganadores].sort((a,b)=>Number(b[idxGoles]||0)-Number(a[idxGoles]||0));
-          const nombres = jugadoresOrd.map(r => (r[idxJugador]||'').toString().trim()).filter(Boolean);
-          const abreviado = nombres.map(n=> n.length>10? n.slice(0,9)+'…':n).join(' · ');
-          if (abreviado) html += `<div class=\"cal-ganadores\" title=\"${nombres.join(', ')}\">${abreviado}</div>`;
-        } else if (empatados.length && filas.length>0) {
-          // Empate: mostrar top goleadores del empate
-          const topG = [...empatados].sort((a,b)=>Number(b[idxGoles]||0)-Number(a[idxGoles]||0)).slice(0,3);
-          const nombres = topG.map(r => (r[idxJugador]||'').toString().trim()).filter(Boolean);
-          const abreviado = nombres.map(n=> n.length>10? n.slice(0,9)+'…':n).join(' · ');
-          if (abreviado) html += `<div class=\"cal-ganadores\" title=\"Máx goleadores: ${nombres.join(', ')}\">${abreviado}</div>`;
-        }
-      } catch(_) {}
-    }
-    html += `</div>`;
-  }
-  html += `</div>`;
-  cont.innerHTML = html;
-  // Click handlers: cuando hay partido, cambiar a submenú Partidos y mostrar detalle
-  cont.querySelectorAll('.historial-cal-day.partido').forEach(el => {
-    el.addEventListener('click', () => {
-      const fecha = el.getAttribute('data-fecha');
-      const btnPart = document.getElementById('historialTabPartidosBtn');
-      const btnCal = document.getElementById('historialTabCalendarioBtn');
-      const tabPart = document.getElementById('historialTabPartidos');
-      const tabCal = document.getElementById('historialTabCalendario');
-      if (btnPart && btnCal && tabPart && tabCal) {
-        btnPart.classList.add('active');
-        btnCal.classList.remove('active');
-        tabPart.style.display = 'block';
-        tabCal.style.display = 'none';
-      }
-      // Reutilizar renderHistorialPartidos y seleccionar la fecha clickeada
-      const detalleDiv = document.getElementById('detallePartido');
-      if (!detalleDiv) return;
-      // Simple: disparar un cambio del selector si existe, si no, re-render y luego seleccionar
-      const select = document.getElementById('selectorPartido');
-      if (select) {
-        const opt = Array.from(select.options).find(o => o.value === fecha);
-        if (opt) { select.value = fecha; select.dispatchEvent(new Event('change')); }
-        else {
-          // Re-render para asegurar lista completa y luego seleccionar
-          renderHistorialPartidos(dataRows, idxFecha, window.idxJugador, window.idxGoles, window.idxPuntos);
-          const select2 = document.getElementById('selectorPartido');
-          if (select2) {
-            const opt2 = Array.from(select2.options).find(o => o.value === fecha);
-            if (opt2) { select2.value = fecha; select2.dispatchEvent(new Event('change')); }
-          }
-        }
-      } else {
-        renderHistorialPartidos(dataRows, idxFecha, window.idxJugador, window.idxGoles, window.idxPuntos);
-        const select2 = document.getElementById('selectorPartido');
-        if (select2) {
-          const opt2 = Array.from(select2.options).find(o => o.value === fecha);
-          if (opt2) { select2.value = fecha; select2.dispatchEvent(new Event('change')); }
-        }
-      }
-    });
-  });
-}
-
 // --- COMPARADOR DE JUGADORES ---
 function renderComparadorJugadores(metricasPorJugador) {
   // Botón random/sorpresa
@@ -1679,31 +1224,13 @@ function renderComparadorJugadores(metricasPorJugador) {
   // Default ahora 5
   let partidosMinimosComp = 5;
   if (inputMinComp) {
-    // Restaurar preferencia previa si existe
-    try {
-      const saved = localStorage.getItem('minPartidosComparador');
-      if ((inputMinComp.value === '' || Number.isNaN(Number(inputMinComp.value))) && saved !== null) {
-        inputMinComp.value = saved;
-      }
-    } catch(_) {}
     const val = Number(inputMinComp.value);
     if (!isNaN(val) && val >= 0) partidosMinimosComp = val; else partidosMinimosComp = 5;
     // Asignar handler solo una vez (si no existe marca)
     if (!inputMinComp.dataset.handlerAttached) {
       inputMinComp.oninput = () => {
-        try { localStorage.setItem('minPartidosComparador', String(inputMinComp.value)); } catch(_) {}
         // Re-render manteniendo (si es posible) selecciones
         renderComparadorJugadores(metricasPorJugador);
-        // Si la pestaña de Sinergias está visible, refrescarla también
-        const tabSin = document.getElementById('comparadorTabSinergias');
-        if (tabSin && tabSin.style.display !== 'none' && typeof window.renderSinergias === 'function') {
-          window.renderSinergias();
-        }
-        // Si la pestaña de Correlación está visible, refrescarla también
-        const tabCorr = document.getElementById('comparadorTabCorrelacion');
-        if (tabCorr && tabCorr.style.display !== 'none' && typeof window.renderCorrelacionChart === 'function') {
-          window.renderCorrelacionChart();
-        }
       };
       inputMinComp.dataset.handlerAttached = 'true';
     }
@@ -1741,14 +1268,8 @@ function renderComparadorJugadores(metricasPorJugador) {
     .map(([j]) => j)
     .sort((a,b)=> a.localeCompare(b,'es'));
   // Guardar selección previa
-  let prev1 = select1.value;
-  let prev2 = select2.value;
-  // Intentar restaurar selección del almacenamiento si no hay valores válidos
-  try {
-    const saved = JSON.parse(localStorage.getItem('comparadorSeleccion')||'{}');
-    if (!prev1 && saved && saved.j1) prev1 = saved.j1;
-    if (!prev2 && saved && saved.j2) prev2 = saved.j2;
-  } catch(_) {}
+  const prev1 = select1.value;
+  const prev2 = select2.value;
   select1.innerHTML = '';
   select2.innerHTML = '';
   jugadores.forEach(j => {
@@ -1791,7 +1312,6 @@ function renderComparadorJugadores(metricasPorJugador) {
   function mostrarComparacion() {
     const j1 = select1.value;
     const j2 = select2.value;
-  try { localStorage.setItem('comparadorSeleccion', JSON.stringify({ j1, j2 })); } catch(_) {}
     // Si hay menos de 2 jugadores disponibles con el filtro, mostrar aviso
     if (jugadores.length < 2) {
       estadisticasDiv.innerHTML = `<p style="color:orange;">Ajusta el filtro de partidos mínimos para comparar (jugadores disponibles: ${jugadores.length}).</p>`;
@@ -1945,18 +1465,19 @@ function renderComparadorJugadores(metricasPorJugador) {
     }
     historial.sort((a, b) => parseFecha(a.fecha) - parseFecha(b.fecha));
 
-    // Calcular historial directo (solo partidos como rivales) excluyendo empates
-    let ganadosJ1 = 0, ganadosJ2 = 0;
+    // Calcular historial directo (solo partidos como rivales)
+    let ganadosJ1 = 0, ganadosJ2 = 0, empatesRivales = 0;
     historial.forEach(e => {
       if (!e.mismoEquipo) {
         if (e.res1 === 'Victoria') ganadosJ1++;
         else if (e.res2 === 'Victoria') ganadosJ2++;
+        else if (e.res1 === 'Empate' && e.res2 === 'Empate') empatesRivales++;
       }
     });
 
     // Renderizar marcador protagónico
-  let marcadorHTML = '';
-  if (ganadosJ1 + ganadosJ2 > 0) {
+    let marcadorHTML = '';
+    if (ganadosJ1 + ganadosJ2 + empatesRivales > 0) {
       marcadorHTML = `
         <div style="display:flex;justify-content:center;align-items:center;margin-bottom:1.2em;margin-top:0.5em;gap:1.2em;">
           <span style="background:#23263a;color:#4fc3f7;font-size:1.25em;font-weight:700;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #4fc3f755;">${j1}</span>
@@ -1965,19 +1486,20 @@ function renderComparadorJugadores(metricasPorJugador) {
           <span style="background:#a8231a;color:#fff;font-size:1.5em;font-weight:900;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #a8231a55;">${ganadosJ2}</span>
           <span style="background:#23263a;color:#4fc3f7;font-size:1.25em;font-weight:700;padding:0.35em 1.2em;border-radius:12px;box-shadow:0 2px 12px #4fc3f755;">${j2}</span>
         </div>
+        <div style=\"text-align:center;margin-bottom:1.2em;color:#b0b0b0;font-size:1.08em;\">
+          ${empatesRivales > 0 ? `<span style='background:#b0b0b0;color:#23263a;padding:0.18em 0.8em;border-radius:8px;font-weight:600;margin:0 0.5em;'>Empates: ${empatesRivales}</span>` : ''}
+        </div>
       `;
     }
 
     // Renderizar tabla
-    // Filtrar empates entre rivales para no mostrarlos en la tabla
-    const historialFiltrado = historial.filter(e => !( !e.mismoEquipo && e.res1 === 'Empate' && e.res2 === 'Empate'));
     let html = '';
-    if (historialFiltrado.length === 0) {
-      html = `<div style=\"text-align:center;color:#ffd700;font-weight:600;\">No hay partidos con ganador entre estos jugadores.</div>`;
+    if (historial.length === 0) {
+      html = `<div style=\"text-align:center;color:#ffd700;font-weight:600;\">No hay partidos donde hayan coincidido estos jugadores.</div>`;
     } else {
       html = `<div style='margin:4em 0 0.5em 0;'></div><h2 class="titulo-comparador" style="margin-top:2.2em;margin-bottom:1.1em;">Historial directo</h2>${marcadorHTML}`;
       html += `<table class=\"tabla-historial-directo\"><thead><tr><th>Fecha</th><th>Resultado ${j1}</th><th>Resultado ${j2}</th><th>Resultado global</th></tr></thead><tbody>`;
-      historialFiltrado.forEach(e => {
+      historial.forEach(e => {
         html += `<tr>`;
         html += `<td>${e.fecha}</td>`;
         if (e.mismoEquipo) {
@@ -1987,8 +1509,15 @@ function renderComparadorJugadores(metricasPorJugador) {
           let color = e.resultadoEquipo === 'Victoria' ? '#218c5f' : (e.resultadoEquipo === 'Derrota' ? '#a8231a' : '#b0b0b0');
           html += `<td style='font-weight:bold;text-align:center;'>${e.global} <span style=\"display:inline-block;margin-left:0.5em;padding:0.15em 0.7em;border-radius:7px;font-size:0.98em;font-weight:600;background:${color};color:#fff;vertical-align:middle;\">${e.resultadoEquipo}</span></td>`;
         } else {
-          html += `<td><span class=\"resultado-${e.res1.toLowerCase()}\">${e.res1}</span></td>`;
-          html += `<td><span class=\"resultado-${e.res2.toLowerCase()}\">${e.res2}</span></td>`;
+          // Si es empate y no mismo equipo, aclarar que fue "Empate (Rivales)"
+          let res1 = e.res1;
+          let res2 = e.res2;
+          if (e.res1 === 'Empate' && e.res2 === 'Empate') {
+            res1 = 'Empate (Rivales)';
+            res2 = 'Empate (Rivales)';
+          }
+          html += `<td><span class=\"resultado-${e.res1.toLowerCase()}\">${res1}</span></td>`;
+          html += `<td><span class=\"resultado-${e.res2.toLowerCase()}\">${res2}</span></td>`;
           html += `<td>${e.global}</td>`;
         }
         html += `</tr>`;
@@ -2015,58 +1544,35 @@ window.addEventListener('DOMContentLoaded', () => {
   const tabHistBtn = document.getElementById('comparadorTabHistorialBtn');
   const tabExtraBtn = document.getElementById('comparadorTabExtraBtn');
   const tabCorrBtn = document.getElementById('comparadorTabCorrelacionBtn');
-  const tabSinBtn = document.getElementById('comparadorTabSinergiasBtn');
   const tabHist = document.getElementById('comparadorTabHistorial');
   const tabExtra = document.getElementById('comparadorTabExtra');
   const tabCorr = document.getElementById('comparadorTabCorrelacion');
-  const tabSin = document.getElementById('comparadorTabSinergias');
   function activarTab(btnActiva) {
-    [tabHistBtn, tabExtraBtn, tabCorrBtn, tabSinBtn].forEach(b => b && b.classList.remove('active'));
+    [tabHistBtn, tabExtraBtn, tabCorrBtn].forEach(b => b && b.classList.remove('active'));
     btnActiva.classList.add('active');
     const cont = document.getElementById('comparadorControlesPrincipales');
     if (btnActiva === tabHistBtn) {
       if (tabHist) tabHist.style.display = 'block';
       if (tabExtra) tabExtra.style.display = 'none';
       if (tabCorr) tabCorr.style.display = 'none';
-      if (tabSin) tabSin.style.display = 'none';
       if (cont) cont.style.display = 'flex';
     } else if (btnActiva === tabExtraBtn) {
       if (tabHist) tabHist.style.display = 'none';
       if (tabExtra) tabExtra.style.display = 'block';
       if (tabCorr) tabCorr.style.display = 'none';
-      if (tabSin) tabSin.style.display = 'none';
       if (cont) cont.style.display = 'none';
       if (typeof window.renderComparadorSerieTemporal === 'function') window.renderComparadorSerieTemporal();
     } else if (btnActiva === tabCorrBtn) {
       if (tabHist) tabHist.style.display = 'none';
       if (tabExtra) tabExtra.style.display = 'none';
       if (tabCorr) tabCorr.style.display = 'block';
-      if (tabSin) tabSin.style.display = 'none';
       if (cont) cont.style.display = 'none';
       if (typeof window.renderCorrelacionChart === 'function') window.renderCorrelacionChart();
-    } else if (btnActiva === tabSinBtn) {
-      if (tabHist) tabHist.style.display = 'none';
-      if (tabExtra) tabExtra.style.display = 'none';
-      if (tabCorr) tabCorr.style.display = 'none';
-      if (tabSin) tabSin.style.display = 'block';
-      if (cont) cont.style.display = 'none';
-      // Sinergias: establecer por defecto Partidos mínimos = 5 (solo una vez si está vacío/ inválido)
-      const inputMinComp = document.getElementById('comparadorPartidosMinimos');
-      if (inputMinComp && !inputMinComp.dataset.sinergiasDefaultApplied) {
-        const cur = Number(inputMinComp.value);
-        if (inputMinComp.value === '' || Number.isNaN(cur)) {
-          inputMinComp.value = '5';
-          inputMinComp.dispatchEvent(new Event('input'));
-        }
-        inputMinComp.dataset.sinergiasDefaultApplied = '1';
-      }
-      if (typeof window.renderSinergias === 'function') window.renderSinergias();
     }
   }
   if (tabHistBtn) tabHistBtn.onclick = () => activarTab(tabHistBtn);
   if (tabExtraBtn) tabExtraBtn.onclick = () => activarTab(tabExtraBtn);
   if (tabCorrBtn) tabCorrBtn.onclick = () => activarTab(tabCorrBtn);
-  if (tabSinBtn) tabSinBtn.onclick = () => activarTab(tabSinBtn);
 });
 
 // === Serie temporal acumulada (segunda pestaña del comparador) ===
@@ -2081,14 +1587,8 @@ window.renderComparadorSerieTemporal = function() {
   const btnToggle = document.getElementById('comparadorSerieJugadoresBtn');
   const btnCerrar = document.getElementById('comparadorSerieJugadoresCerrar');
   const btnClear = document.getElementById('comparadorSerieJugadoresClear');
-  const btnSelectAll = document.getElementById('comparadorSerieJugadoresSelectAll');
   const countBadge = document.getElementById('comparadorSerieJugadoresCount');
   if (!select1 || !select2 || !metricSel) return;
-  // Restaurar métrica previa
-  try {
-    const savedMetric = localStorage.getItem('comparadorSerieMetric');
-    if (savedMetric && metricSel.value !== savedMetric) metricSel.value = savedMetric;
-  } catch(_) {}
   // Construir opciones del multi-select (filtradas por partidos mínimos) si está vacío o cantidad cambió
   if (multiSel) {
     const inputMinComp = document.getElementById('comparadorPartidosMinimos');
@@ -2100,36 +1600,20 @@ window.renderComparadorSerieTemporal = function() {
     const jugadoresElegibles = Object.entries(metricas)
       .filter(([_, m]) => m.partidos >= partidosMinimosComp)
       .map(([j])=>j).sort((a,b)=> a.localeCompare(b,'es'));
-    const eligiblesHash = jugadoresElegibles.join('|') + '::' + partidosMinimosComp;
-    // Solo reconstruir si cambió el conjunto elegible (evita saltos al seleccionar)
-    if (multiSel.dataset.eligiblesHash !== eligiblesHash) {
-      const prevSeleccion = Array.from(multiSel.selectedOptions).map(o=>o.value);
-      const prevScroll = multiSel.scrollTop;
-      multiSel.innerHTML='';
-      jugadoresElegibles.forEach(j => {
-        const opt=document.createElement('option');
-        opt.value=j; opt.textContent=j;
-        // Intentar restaurar selección almacenada si no hay selección previa
-        let shouldSelect = prevSeleccion.includes(j);
-        if (!shouldSelect) {
-          try {
-            const savedSel = JSON.parse(localStorage.getItem('comparadorSerieSel')||'[]');
-            if (Array.isArray(savedSel) && savedSel.includes(j)) shouldSelect = true;
-          } catch(_) {}
-        }
-        if (shouldSelect) opt.selected=true;
-        multiSel.appendChild(opt);
-      });
-      multiSel.dataset.eligiblesHash = eligiblesHash;
-      // Restaurar scroll al valor previo (clamp automático por el navegador)
-      try { multiSel.scrollTop = prevScroll; requestAnimationFrame(() => { multiSel.scrollTop = prevScroll; }); } catch(_){}
-    }
+    const prevSeleccion = Array.from(multiSel.selectedOptions).map(o=>o.value);
+    // Reconstruir siempre para reflejar filtro
+    multiSel.innerHTML='';
+    jugadoresElegibles.forEach(j => {
+      const opt=document.createElement('option');
+      opt.value=j; opt.textContent=j;
+      if (prevSeleccion.includes(j)) opt.selected=true;
+      multiSel.appendChild(opt);
+    });
   }
   let jugadoresSeleccionados = [];
   if (multiSel) {
     jugadoresSeleccionados = Array.from(multiSel.selectedOptions).map(o=>o.value);
   if (countBadge) countBadge.textContent = jugadoresSeleccionados.length;
-  try { localStorage.setItem('comparadorSerieSel', JSON.stringify(jugadoresSeleccionados)); } catch(_) {}
   }
   // Fallback: si no hay selección múltiple, usar los dos selects del comparador
   if (jugadoresSeleccionados.length === 0) {
@@ -2256,25 +1740,19 @@ window.renderComparadorSerieTemporal = function() {
   }
   // Listeners (solo adjuntar una vez)
   if (metricSel && !metricSel.dataset.handlerAttached) {
-  metricSel.onchange = () => { try { localStorage.setItem('comparadorSerieMetric', metricSel.value); } catch(_) {} window.renderComparadorSerieTemporal(); };
+    metricSel.onchange = () => window.renderComparadorSerieTemporal();
     metricSel.dataset.handlerAttached = 'true';
   }
   if (multiSel && !multiSel.dataset.handlerAttached) {
     multiSel.onchange = () => window.renderComparadorSerieTemporal();
     multiSel.dataset.handlerAttached = 'true';
     // Permitir toggle con click sin CTRL
-  multiSel.addEventListener('mousedown', (e) => {
+    multiSel.addEventListener('mousedown', (e) => {
       if (e.target.tagName === 'OPTION') {
-    const st = multiSel.scrollTop;
         e.preventDefault();
         const opt = e.target;
         opt.selected = !opt.selected;
         multiSel.dispatchEvent(new Event('change'));
-    // Restaurar scroll inmediatamente y en el próximo frame por si hay reflow
-    multiSel.scrollTop = st;
-    requestAnimationFrame(() => { multiSel.scrollTop = st; });
-  // Mantener visible el elemento clickeado sin alterar selección múltiple
-  try { opt.scrollIntoView({ block: 'nearest' }); } catch(_){}
       }
     });
   }
@@ -2297,14 +1775,6 @@ window.renderComparadorSerieTemporal = function() {
       multiSel.dispatchEvent(new Event('change'));
     };
     btnClear.dataset.handlerAttached = 'true';
-  }
-  if (btnSelectAll && !btnSelectAll.dataset.handlerAttached) {
-    btnSelectAll.onclick = () => {
-      if (!multiSel) return;
-      Array.from(multiSel.options).forEach(o => o.selected = true);
-      multiSel.dispatchEvent(new Event('change'));
-    };
-    btnSelectAll.dataset.handlerAttached = 'true';
   }
   // Cerrar al click fuera
   if (!window._comparadorOutsideClickBound) {
@@ -2484,12 +1954,21 @@ function renderDashboardJugador(metricasPorJugador) {
       partidosHistoricos += 1;
     });
 
-  // --- Medalla escalable: Goles Totales (histórico) ---
-  const golesNiveles = medallasConfig.goles.niveles;
-  if (golesHistoricos < golesNiveles[0].min) {
+    // --- Medalla escalable: Goles Totales (histórico) ---
+    // 7 niveles: Madera, Bronce, Hierro, Plata, Oro, Diamante, Dios del Futbol
+    const golesNiveles = [
+      { min: 3,   icon: '⚽', nombre: 'Madera',           colorClass: 'nivel-1' },
+      { min: 15,  icon: '⚽', nombre: 'Bronce',           colorClass: 'nivel-2' },
+      { min: 40,  icon: '⚽', nombre: 'Hierro',           colorClass: 'nivel-3' },
+      { min: 80,  icon: '⚽', nombre: 'Plata',            colorClass: 'nivel-4' },
+      { min: 150, icon: '🏆', nombre: 'Oro',              colorClass: 'nivel-5' },
+      { min: 300, icon: '💎', nombre: 'Diamante',         colorClass: 'nivel-6' },
+      { min: 600, icon: '⚡', nombre: 'Dios del Futbol',  colorClass: 'nivel-7' }
+    ];
+    if (golesHistoricos < 3) {
       medallas.push({
         icon: '🔒',
-    tooltip: `Logro bloqueado<br>Marca al menos ${golesNiveles[0].min} goles para desbloquear`,
+        tooltip: 'Logro bloqueado<br>Marca al menos 3 goles para desbloquear',
         locked: true,
         colorClass: '',
         cartelProgreso: '<span class="medalla-progreso-cartel locked">Logro bloqueado</span>',
@@ -2523,11 +2002,20 @@ function renderDashboardJugador(metricasPorJugador) {
     }
 
     // --- Medalla escalable: Partidos Jugados Totales (histórico) ---
-    const partidosNiveles = medallasConfig.partidos.niveles;
-    if (partidosHistoricos < partidosNiveles[0].min) {
+    // 7 niveles: Madera, Bronce, Hierro, Plata, Oro, Diamante, Dueño del gimnasio
+    const partidosNiveles = [
+      { min: 5,   icon: '🎽', nombre: 'Madera',              colorClass: 'nivel-1' },
+      { min: 20,  icon: '🎽', nombre: 'Bronce',              colorClass: 'nivel-2' },
+      { min: 50,  icon: '🎽', nombre: 'Hierro',              colorClass: 'nivel-3' },
+      { min: 75,  icon: '🎽', nombre: 'Plata',               colorClass: 'nivel-4' },
+      { min: 100, icon: '🏆', nombre: 'Oro',                 colorClass: 'nivel-5' },
+      { min: 150, icon: '💎', nombre: 'Diamante',            colorClass: 'nivel-6' },
+      { min: 300, icon: '⚡', nombre: 'Dueño del gimnasio', colorClass: 'nivel-7' }
+    ];
+    if (partidosHistoricos < 5) {
       medallas.push({
         icon: '🔒',
-        tooltip: `Logro bloqueado<br>Juega al menos ${partidosNiveles[0].min} partidos para desbloquear`,
+        tooltip: 'Logro bloqueado<br>Juega al menos 5 partidos para desbloquear',
         locked: true,
         colorClass: '',
         cartelProgreso: '<span class="medalla-progreso-cartel locked">Logro bloqueado</span>'
@@ -2559,18 +2047,26 @@ function renderDashboardJugador(metricasPorJugador) {
     }
 
     // --- Medalla escalable: Victorias Totales (histórico) ---
-    // 7 niveles definidos en medallasConfig
+    // 7 niveles: Madera, Bronce, Hierro, Plata, Oro, Diamante, Dueño del gimnasio
     let victoriasHistoricas = 0;
     filasJugador.forEach(cols => {
       // Asume que idxPuntosLogros existe y 3 puntos = victoria
       const puntos = Number(cols[window.idxPuntos]);
       if (puntos === 3) victoriasHistoricas++;
     });
-    const victoriasNiveles = medallasConfig.victorias.niveles;
-    if (victoriasHistoricas < victoriasNiveles[0].min) {
+    const victoriasNiveles = [
+      { min: 2,   icon: '🏅', nombre: 'Madera',              colorClass: 'nivel-1' },
+      { min: 15,  icon: '🏅', nombre: 'Bronce',              colorClass: 'nivel-2' },
+      { min: 30,  icon: '🏅', nombre: 'Hierro',              colorClass: 'nivel-3' },
+      { min: 60,  icon: '🏅', nombre: 'Plata',               colorClass: 'nivel-4' },
+      { min: 80,  icon: '🏆', nombre: 'Oro',                 colorClass: 'nivel-5' },
+      { min: 100, icon: '💎', nombre: 'Diamante',            colorClass: 'nivel-6' },
+      { min: 250, icon: '⚡', nombre: 'Máquina de Ganar', colorClass: 'nivel-7' }
+    ];
+    if (victoriasHistoricas < 2) {
       medallas.push({
         icon: '🔒',
-        tooltip: `Logro bloqueado<br>Gana al menos ${victoriasNiveles[0].min} partidos para desbloquear`,
+        tooltip: 'Logro bloqueado<br>Gana al menos 2 partidos para desbloquear',
         locked: true,
         colorClass: '',
         cartelProgreso: '<span class="medalla-progreso-cartel locked">Logro bloqueado</span>'
@@ -2932,8 +2428,8 @@ function colorFondoGoles(goles, maxGoles) {
 window.renderCorrelacionChart = function() {
     const container = document.getElementById('grafico-desempeno');
     if (!container) return;
-  // No limpiar los controles, solo el gráfico
-  // El mínimo de partidos depende del control de 'comparadorPartidosMinimos'
+    // No limpiar los controles, solo el gráfico
+    // El filtro de partidos mínimos se elimina, el mínimo es fijo (4)
 
     // Buscar o crear el canvas
     let canvas = document.getElementById('correlacionChart');
@@ -2952,9 +2448,8 @@ window.renderCorrelacionChart = function() {
     canvas.style.margin = '0 auto';
 
     // Etiquetas para los ejes y mapeo a propiedades reales
-  const etiquetas = {
+    const etiquetas = {
         partidos_jugados: 'Partidos jugados',
-    puntos_totales: 'Puntos',
         goles_totales: 'Goles totales',
         victorias: 'Victorias',
         derrotas: 'Derrotas',
@@ -2962,9 +2457,8 @@ window.renderCorrelacionChart = function() {
         diferencia_gol: 'Diferencia de gol',
         puntos_por_partido: 'Puntos por partido'
     };
-  const mapeo = {
+    const mapeo = {
         partidos_jugados: j => j.partidos,
-    puntos_totales: j => j.puntos,
         goles_totales: j => j.goles,
         victorias: j => j.ganados,
         derrotas: j => j.perdidos,
@@ -2975,14 +2469,12 @@ window.renderCorrelacionChart = function() {
 
     function renderChart() {
         // Leer SIEMPRE los valores actuales de los dropdowns
-  const ejeX = document.getElementById('ejeX') ? document.getElementById('ejeX').value : 'partidos_jugados';
-  const ejeY = document.getElementById('ejeY') ? document.getElementById('ejeY').value : 'goles_totales';
-  // Leer el filtro global del comparador; default a 0 si no existe
-  const inputMinComp = document.getElementById('comparadorPartidosMinimos');
-  const minPartidos = inputMinComp ? Math.max(0, Number(inputMinComp.value) || 0) : 0;
+        const ejeX = document.getElementById('ejeX') ? document.getElementById('ejeX').value : 'partidos_jugados';
+        const ejeY = document.getElementById('ejeY') ? document.getElementById('ejeY').value : 'goles_totales';
+        const minPartidos = 4;
         const metricas = window.metricasPorJugador || {};
-    const datosReales = Object.entries(metricas)
-      .filter(([nombre, j]) => (Number(j.partidos) || 0) >= minPartidos)
+        const datosReales = Object.entries(metricas)
+            .filter(([nombre, j]) => j.partidos >= minPartidos)
             .map(([nombre, j]) => {
                 // Usar la clave como nombre principal
                 let nombreMostrar = nombre;
@@ -3009,13 +2501,6 @@ window.renderCorrelacionChart = function() {
             img.onerror = function() { this.src = 'img/jugadores/jugador-vacio.png'; };
             return img;
         });
-        // Actualizar badge visual con el mínimo actual
-        try {
-          const badge = document.getElementById('correlacionMinInfo');
-          if (badge) {
-            badge.textContent = minPartidos > 0 ? `Jugadores con ${minPartidos}+ partidos` : 'Todos los jugadores';
-          }
-        } catch(_) {}
         Promise.all(images.map(img => new Promise(res => {
             if (img.complete) res();
             else img.onload = res;
@@ -3031,111 +2516,49 @@ window.renderCorrelacionChart = function() {
                     // Detectar ejes actuales
                     const ejeXVal = ejeX;
                     const ejeYVal = ejeY;
-          const xScale = chart.scales.x;
-          const yScale = chart.scales.y;
-          const xMin = xScale.min, xMax = xScale.max;
-          const yMin = yScale.min, yMax = yScale.max;
-          // Helper: intersecta y = m*x con el rectángulo visible y devuelve dos puntos dentro [ [x1,y1], [x2,y2] ] o null
-          function getVisibleSegment(m) {
-            const pts = [];
-            // Intersección con x = xMin y x = xMax
-            const y_at_xMin = m * xMin; if (y_at_xMin >= yMin && y_at_xMin <= yMax) pts.push([xMin, y_at_xMin]);
-            const y_at_xMax = m * xMax; if (y_at_xMax >= yMin && y_at_xMax <= yMax) pts.push([xMax, y_at_xMax]);
-            // Intersección con y = yMin y y = yMax
-            if (m !== 0) {
-              const x_at_yMin = yMin / m; if (x_at_yMin >= xMin && x_at_yMin <= xMax) pts.push([x_at_yMin, yMin]);
-              const x_at_yMax = yMax / m; if (x_at_yMax >= xMin && x_at_yMax <= xMax) pts.push([x_at_yMax, yMax]);
-            }
-            // Quitar duplicados aproximando
-            const uniq = [];
-            pts.forEach(([x,y]) => {
-              const found = uniq.some(([ux,uy]) => Math.abs(ux-x) < 1e-6 && Math.abs(uy-y) < 1e-6);
-              if (!found) uniq.push([x,y]);
-            });
-            if (uniq.length < 2) return null;
-            // Elegir dos extremos por x
-            uniq.sort((a,b)=>a[0]-b[0]);
-            return [uniq[0], uniq[uniq.length-1]];
-          }
-          // Dibuja una familia de rectas y prepara etiquetas visibles
-          function drawFamily(pendientes, colores, labelPrefix) {
-            const ctx = chart.ctx;
-            const ca = chart.chartArea;
-            // 1) Líneas: se dibujan CLIPeadas para no salir del área
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
-            ctx.clip();
-            pendientes.forEach((m, idx) => {
-              const seg = getVisibleSegment(m);
-              if (!seg) return;
-              const [[x1,y1],[x2,y2]] = seg;
-              ctx.beginPath();
-              ctx.moveTo(xScale.getPixelForValue(x1), yScale.getPixelForValue(y1));
-              ctx.lineTo(xScale.getPixelForValue(x2), yScale.getPixelForValue(y2));
-              ctx.strokeStyle = colores[idx % colores.length];
-              ctx.lineWidth = 2;
-              ctx.setLineDash([6,6]);
-              ctx.globalAlpha = 0.9;
-              ctx.stroke();
-              ctx.setLineDash([]);
-            });
-            ctx.restore();
-
-            // 2) Etiquetas: SIN clip, empujadas hacia adentro para ser siempre visibles
-            const margin = 10; // margen interior mínimo
-            const labels = [];
-            pendientes.forEach((m, idx) => {
-              const seg = getVisibleSegment(m);
-              if (!seg) return;
-              const [[,],[x2,y2]] = seg; // extremo derecho (por ordenación previa)
-              let xPix = xScale.getPixelForValue(x2);
-              let yPix = yScale.getPixelForValue(y2);
-              // Empujar hacia adentro del área
-              if (xPix > ca.right - margin) xPix = ca.right - margin;
-              if (xPix < ca.left + margin)  xPix = ca.left + margin;
-              if (yPix > ca.bottom - margin) yPix = ca.bottom - margin;
-              if (yPix < ca.top + margin)    yPix = ca.top + margin;
-              labels.push({
-                text: `${labelPrefix} = ${m}`,
-                x: xPix,
-                y: yPix,
-                color: colores[idx % colores.length]
-              });
-            });
-            chart.$refLabels = (chart.$refLabels || []).concat(labels);
-          }
-          if (ejeXVal === 'partidos_jugados' && ejeYVal === 'goles_totales') {
-            drawFamily([0.5,1,2,3,4], ['#8be9fdcc', '#21c97a88', '#ffd70088', '#e74a3b88', '#4a90e288'], 'GxP');
-          } else if (ejeXVal === 'partidos_jugados' && ejeYVal === 'puntos_totales') {
-            // Agregamos 0.5 a PxP como referencia adicional
-            drawFamily([0.5,1,2,3], ['#8be9fd88', '#8be9fdcc', '#21c97a88', '#ffd70088'], 'PxP');
-          }
-                },
-                afterDraw(chart) {
-                  // Dibujar las etiquetas por encima de datasets e imágenes
-                  const labels = chart.$refLabels || [];
-                  if (!labels.length) return;
-                  const ctx = chart.ctx;
-                  labels.forEach(({ text, x, y, color }) => {
-                    ctx.save();
-                    ctx.globalAlpha = 1;
-                    ctx.font = '600 14px Segoe UI, Arial, sans-serif';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'bottom';
-                    // Texto con el mismo color que la recta y fondo transparente
-                    const solid = color.replace('88','ff').replace('cc','ff');
-                    // Sombra sutil para legibilidad sobre fondos oscuros
-                    ctx.shadowColor = 'rgba(0,0,0,0.55)';
-                    ctx.shadowBlur = 2;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 1;
-                    ctx.fillStyle = solid;
-                    ctx.fillText(text, x, y - 2);
-                    ctx.restore();
-                  });
-                  // Limpiar para el siguiente ciclo
-                  chart.$refLabels = [];
+                    if (ejeXVal === 'partidos_jugados' && ejeYVal === 'goles_totales') {
+                        const ctx = chart.ctx;
+                        const xScale = chart.scales.x;
+                        const yScale = chart.scales.y;
+                        const pendientes = [0.5, 1, 2, 3, 4];
+                        const colores = ['#8be9fdcc', '#21c97a88', '#ffd70088', '#e74a3b88', '#4a90e288'];
+                        const xMin = xScale.min;
+                        const xMax = xScale.max;
+                        ctx.save();
+                        pendientes.forEach((m, idx) => {
+                            // Para cada pendiente, calcular dos puntos: (xMin, m*xMin) y (xMax, m*xMax)
+                            const y1 = m * xMin;
+                            const y2 = m * xMax;
+                            // Dibujar la línea
+                            ctx.beginPath();
+                            ctx.moveTo(xScale.getPixelForValue(xMin), yScale.getPixelForValue(y1));
+                            ctx.lineTo(xScale.getPixelForValue(xMax), yScale.getPixelForValue(y2));
+                            ctx.strokeStyle = colores[idx % colores.length];
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([6, 6]);
+                            ctx.globalAlpha = 0.7;
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+                            // Etiqueta de texto sobre la recta (cerca del extremo derecho)
+                            const label = `GxP = ${m}`;
+                            const xLabel = xScale.getPixelForValue(xMax) - 10;
+                            const yLabel = yScale.getPixelForValue(m * xMax) - 8;
+                            ctx.save();
+                            ctx.globalAlpha = 0.95;
+                            ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+                            ctx.textAlign = 'right';
+                            ctx.textBaseline = 'bottom';
+                            // Fondo oscuro para el texto
+                            const textWidth = ctx.measureText(label).width;
+                            ctx.fillStyle = '#23263acc';
+                            ctx.fillRect(xLabel - textWidth - 8, yLabel - 18, textWidth + 12, 22);
+                            // Texto
+                            ctx.fillStyle = colores[idx % colores.length].replace('88', 'ff').replace('cc','ff');
+                            ctx.fillText(label, xLabel, yLabel);
+                            ctx.restore();
+                        });
+                        ctx.restore();
+                    }
                 }
             };
             // Plugin para dibujar imágenes manualmente, pero después de los tooltips
@@ -3257,7 +2680,6 @@ window.renderCorrelacionChart = function() {
 document.addEventListener('DOMContentLoaded', function() {
   const ejeXElem = document.getElementById('ejeX');
   const ejeYElem = document.getElementById('ejeY');
-  const inputMinComp = document.getElementById('comparadorPartidosMinimos');
   function safeRender() {
     const tabCorr = document.getElementById('comparadorTabCorrelacion');
     if (tabCorr && tabCorr.style.display !== 'none') {
@@ -3266,619 +2688,5 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (ejeXElem) ejeXElem.onchange = safeRender;
   if (ejeYElem) ejeYElem.onchange = safeRender;
-  if (inputMinComp) inputMinComp.addEventListener('input', safeRender);
 });
-}
-
-// === Sinergias (nuevo submenú) ===
-window.renderSinergias = function() {
-  const grid = document.getElementById('sinergiasGrid');
-  if (!grid) return;
-  const multi = document.getElementById('sinJugadoresMulti');
-  const count = document.getElementById('sinJugadoresCount');
-  const btn = document.getElementById('sinJugadoresBtn');
-  const panel = document.getElementById('sinJugadoresPanel');
-  const cerrar = document.getElementById('sinJugadoresCerrar');
-  const clear = document.getElementById('sinJugadoresClear');
-  const selectAll = document.getElementById('sinJugadoresSelectAll');
-  const selModo = document.getElementById('sinModo');
-  const selMet = document.getElementById('sinMetrica');
-  const inputMinComp = document.getElementById('comparadorPartidosMinimos');
-  // Estado de zoom (persistencia simple en memoria; se podría llevar a localStorage si querés)
-  if (typeof window._sinZoomFactor !== 'number') {
-    const z = Number(localStorage.getItem('sinZoomFactor'));
-    window._sinZoomFactor = isNaN(z) || z <= 0 ? 1 : z;
-  }
-  const zoomInBtn = document.getElementById('sinZoomInBtn');
-  const zoomOutBtn = document.getElementById('sinZoomOutBtn');
-  const zoomResetBtn = document.getElementById('sinZoomResetBtn');
-  const zoomLabel = document.getElementById('sinZoomLabel');
-  // Helper: construir opciones elegibles según partidos mínimos
-  function buildSinergiasEligibleList() {
-    if (!multi) return;
-    let partidosMinimos = 5;
-    if (inputMinComp) {
-      const v = Number(inputMinComp.value);
-      if (!isNaN(v) && v>=0) partidosMinimos = v;
-    }
-    let jugadores = [];
-    const metricas = window.metricasPorJugador || {};
-    if (metricas && Object.keys(metricas).length) {
-      jugadores = Object.entries(metricas)
-        .filter(([_, m]) => Number(m.partidos||0) >= partidosMinimos)
-        .map(([j])=>j);
-    } else if (Array.isArray(window.dataRowsOriginal) && typeof window.idxJugador === 'number') {
-      jugadores = Array.from(new Set(window.dataRowsOriginal.map(r => String(r[window.idxJugador]).trim())));
-    }
-    jugadores.sort((a,b)=> a.localeCompare(b,'es'));
-    const prevSeleccion = new Set(Array.from(multi.options).filter(o=>o.selected).map(o=>o.value));
-    const prevScroll = multi.scrollTop;
-    multi.innerHTML = '';
-    jugadores.forEach(n => {
-      const opt = document.createElement('option');
-      opt.value = n; opt.text = n; opt.selected = prevSeleccion.has(n);
-      multi.appendChild(opt);
-    });
-    if (count) count.textContent = String(Array.from(multi.options).filter(o=>o.selected).length);
-    try { multi.scrollTop = prevScroll; requestAnimationFrame(()=>{ multi.scrollTop = prevScroll; }); } catch(_){}
-  }
-  // Alinear opciones de "Métrica" con el "Modo" seleccionado
-  function updateMetricOptions() {
-    if (!selMet) return;
-    const prev = selMet.value;
-    const modo = selModo ? selModo.value : 'juntos';
-    let html = '';
-    if (modo === 'vs') {
-      html = '<option value="hist">Historial directo</option>' +
-             '<option value="pj">Partidos</option>';
-    } else {
-      html = '<option value="wr">Win rate</option>' +
-             '<option value="gd">Dif. de gol (medio)</option>' +
-             '<option value="gdt">Dif. de gol (total)</option>' +
-             '<option value="pj">Partidos</option>';
-    }
-    selMet.innerHTML = html;
-    // Restaurar selección si sigue siendo válida; si no, elegir por defecto (wr en juntos, pj en vs)
-  const allowed = Array.from(selMet.options).map(o=>o.value);
-  const target = allowed.includes(prev) ? prev : (modo==='vs' ? 'hist' : 'wr');
-    selMet.value = target;
-  }
-  // Inicializar multiselect elegible según filtro global
-  if (multi && multi.options.length === 0) buildSinergiasEligibleList();
-  if (count && multi) count.textContent = String(Array.from(multi.options).filter(o=>o.selected).length);
-  // Eventos panel
-  if (btn && panel && !btn.dataset.sinHandler) { btn.onclick = ()=>{ panel.style.display = panel.style.display==='none'?'block':'none'; }; btn.dataset.sinHandler='1'; }
-  if (cerrar && panel && !cerrar.dataset.sinHandler) { cerrar.onclick = ()=>{ panel.style.display = 'none'; }; cerrar.dataset.sinHandler='1'; }
-  if (clear && multi && count && !clear.dataset.sinHandler) { clear.onclick = ()=>{
-    Array.from(multi.options).forEach(o=>o.selected=false);
-    count.textContent = '0';
-    dibujar();
-  }; clear.dataset.sinHandler='1'; }
-  if (selectAll && multi && count && !selectAll.dataset.sinHandler) { selectAll.onclick = ()=>{
-    Array.from(multi.options).forEach(o=>o.selected=true);
-    count.textContent = String(multi.options.length);
-    dibujar();
-  }; selectAll.dataset.sinHandler='1'; }
-  if (multi && count && !multi.dataset.sinChange) { multi.onchange = ()=>{
-    count.textContent = String(Array.from(multi.options).filter(o=>o.selected).length);
-    setTimeout(() => dibujar(), 0);
-  }; multi.dataset.sinChange='1'; }
-  // Toggle selección con click simple (sin CTRL)
-  if (multi && !multi.dataset.sinToggle) {
-  multi.addEventListener('mousedown', (e) => {
-      const target = e.target;
-      if (target && target.tagName === 'OPTION') {
-  // Guardar y restaurar scroll para evitar que salte al inicio
- const st = multi.scrollTop;
-  e.preventDefault();
-  target.selected = !target.selected;
-  multi.dispatchEvent(new Event('change'));
- // Restaurar scroll inmediatamente y en el próximo frame por si hay reflow
-  multi.scrollTop = st;
- requestAnimationFrame(() => { multi.scrollTop = st; });
-      }
-    });
-    multi.dataset.sinToggle = '1';
-  }
-  // Cerrar panel al hacer click fuera
-  if (!window._sinergiasOutsideClickBound && panel && btn) {
-    document.addEventListener('click', (e) => {
-      if (panel.style.display==='none') return;
-      if (panel.contains(e.target) || btn.contains(e.target)) return;
-      panel.style.display = 'none';
-    });
-    window._sinergiasOutsideClickBound = true;
-  }
-  // Inicializar opciones de métrica según el modo actual
-  updateMetricOptions();
-  if (selModo && !selModo.dataset.sinModoHandler) {
-    selModo.onchange = () => { updateMetricOptions(); dibujar(); };
-    selModo.dataset.sinModoHandler = '1';
-  }
-  if (selMet && !selMet.dataset.sinMetHandler) {
-    selMet.onchange = dibujar;
-    selMet.dataset.sinMetHandler = '1';
-  }
-  // Escuchar cambios del filtro global de mínimos para actualizar la lista y re-dibujar
-  if (inputMinComp && !inputMinComp.dataset.sinergiasListener) {
-    inputMinComp.addEventListener('input', () => { buildSinergiasEligibleList(); dibujar(); });
-    inputMinComp.dataset.sinergiasListener = '1';
-  }
-
-  // Listeners de Zoom
-  function applyZoomLabel() {
-    if (zoomLabel) zoomLabel.textContent = Math.round(window._sinZoomFactor * 100) + '%';
-  }
-  function clampZoom(z) { return Math.max(0.4, Math.min(2.0, z)); }
-  if (zoomInBtn && !zoomInBtn.dataset.zoomHandler) {
-  zoomInBtn.addEventListener('click', () => { window._sinZoomFactor = clampZoom(window._sinZoomFactor * 1.15); localStorage.setItem('sinZoomFactor', String(window._sinZoomFactor)); applyZoomLabel(); dibujar(); });
-    zoomInBtn.dataset.zoomHandler = '1';
-  }
-  if (zoomOutBtn && !zoomOutBtn.dataset.zoomHandler) {
-  zoomOutBtn.addEventListener('click', () => { window._sinZoomFactor = clampZoom(window._sinZoomFactor / 1.15); localStorage.setItem('sinZoomFactor', String(window._sinZoomFactor)); applyZoomLabel(); dibujar(); });
-    zoomOutBtn.dataset.zoomHandler = '1';
-  }
-  if (zoomResetBtn && !zoomResetBtn.dataset.zoomHandler) {
-  zoomResetBtn.addEventListener('click', () => { window._sinZoomFactor = 1; localStorage.setItem('sinZoomFactor', '1'); applyZoomLabel(); dibujar(); });
-    zoomResetBtn.dataset.zoomHandler = '1';
-  }
-  applyZoomLabel();
-
-  function normalizarFecha(f) {
-    const parts = f.split(/[\/-]/).map(x=>parseInt(x,10));
-    let [dd,mm,yy] = parts;
-    if (yy < 100) yy = 2000 + yy;
-    return new Date(yy, (mm||1)-1, dd||1);
-  }
-
-  function agruparPorFecha(rows, idxFecha) {
-    const mapa = new Map();
-    for (const r of rows) {
-      const f = r[idxFecha];
-      if (!mapa.has(f)) mapa.set(f, []);
-      mapa.get(f).push(r);
-    }
-    return mapa;
-  }
-
-  function computeSinergias(rows, modo, jugadoresSel, minPJ) {
-    const idxFecha = window.idxFecha, idxJugador = window.idxJugador, idxPuntos = window.idxPuntos, idxGoles = window.idxGoles;
-    const idxAutogoles = typeof window.idxAutogoles==='number'?window.idxAutogoles:-1;
-    if (idxFecha==null || idxJugador==null || idxPuntos==null || idxGoles==null) return { jugadores: [], matriz: new Map(), totales:{} };
-    const porFecha = agruparPorFecha(rows, idxFecha);
-    const setSel = new Set(jugadoresSel);
-    const key = (a,b)=> a < b ? a+"|"+b : b+"|"+a;
-    const matriz = new Map(); // clave par -> stats
-    const totales = { min: Infinity, max: -Infinity };
-    for (const [f, lista] of porFecha.entries()) {
-      // separar por puntos
-      const eqGan = lista.filter(r=>Number(r[idxPuntos])===3);
-      const eqPer = lista.filter(r=>Number(r[idxPuntos])===0);
-      const eqEmp = lista.filter(r=>Number(r[idxPuntos])===1);
-      // calcular goles netos de equipo
-      const suma = (arr, i)=>arr.reduce((a,c)=>a+Number(c[i]||0),0);
-      const auto = (arr)=> idxAutogoles>=0? arr.reduce((a,c)=>a+Number(c[idxAutogoles]||0),0):0;
-      let teamA=[], teamB=[], gA=0, gB=0, hayEmp=false;
-      if (eqGan.length && eqPer.length) {
-        // dos equipos claros
-        teamA = eqGan; teamB = eqPer;
-        const gPropA = suma(teamA, idxGoles), gPropB = suma(teamB, idxGoles);
-        const gAutoA = auto(teamA), gAutoB = auto(teamB);
-        gA = gPropA + gAutoB; gB = gPropB + gAutoA;
-      } else {
-        // empate: dividir en dos mitades para GD, pero WR lo excluye
-        hayEmp = eqEmp.length>0;
-        if (hayEmp) {
-          const mitad = Math.ceil(eqEmp.length/2);
-          teamA = eqEmp.slice(0,mitad); teamB = eqEmp.slice(mitad);
-          const gPropA = suma(teamA, idxGoles), gPropB = suma(teamB, idxGoles);
-          const gAutoA = auto(teamA), gAutoB = auto(teamB);
-          gA = gPropA + gAutoB; gB = gPropB + gAutoA;
-        } else continue;
-      }
-      const nombresA = teamA.map(r=>String(r[idxJugador]).trim());
-      const nombresB = teamB.map(r=>String(r[idxJugador]).trim());
-      const selA = nombresA.filter(n=>setSel.has(n));
-      const selB = nombresB.filter(n=>setSel.has(n));
-      if (modo==='juntos') {
-        // dentro de cada equipo
-        const act = (a,b,win,emp,gd)=>{
-          if (a===b) return;
-          const k = key(a,b);
-          if (!matriz.has(k)) matriz.set(k,{pj:0,w:0,l:0,e:0,gdAcum:0});
-          const s = matriz.get(k);
-          s.pj++; s.gdAcum += gd; if (win) s.w++; else if (emp) s.e++; else s.l++;
-        };
-        const winA = gA>gB, winB = gB>gA, emp = gA===gB;
-        for (let i=0;i<selA.length;i++) for (let j=i+1;j<selA.length;j++) act(selA[i], selA[j], winA, emp, gA-gB);
-        for (let i=0;i<selB.length;i++) for (let j=i+1;j<selB.length;j++) act(selB[i], selB[j], winB, emp, gB-gA);
-      } else {
-        // enfrentados: orientación A->B
-        for (const a of selA) for (const b of selB) {
-          // A -> B (perspectiva de la fila A versus la columna B)
-          const k = a+"|"+b;
-          if (!matriz.has(k)) matriz.set(k,{pj:0,w:0,l:0,e:0,gdAcum:0});
-          const s = matriz.get(k);
-          s.pj++; s.gdAcum += (gA-gB);
-          if (gA>gB) s.w++; else if (gA<gB) s.l++; else s.e++;
-          // B -> A (perspectiva de la fila B versus la columna A)
-          const k2 = b+"|"+a;
-          if (!matriz.has(k2)) matriz.set(k2,{pj:0,w:0,l:0,e:0,gdAcum:0});
-          const s2 = matriz.get(k2);
-          s2.pj++; s2.gdAcum += (gB-gA);
-          if (gB>gA) s2.w++; else if (gB<gA) s2.l++; else s2.e++;
-        }
-      }
-    }
-    // derivar métricas y filtrar por minPJ
-    const jugadores = Array.from(new Set(jugadoresSel)).sort();
-    const datos = new Map();
-    for (const [k,s] of matriz.entries()) {
-      if (s.pj < minPJ) continue;
-      const denom = Math.max(1, (s.w + s.l)); // empates excluidos del WR
-      const wr = (s.w/denom)*100;
-      const gdMed = s.gdAcum / s.pj;
-      datos.set(k, { ...s, wr, gdMed, gdTot: s.gdAcum });
-      if (wr<totales.min) totales.min = wr; if (wr>totales.max) totales.max = wr;
-    }
-    return { jugadores, datos };
-  }
-
-  function colorWR(p) {
-    // 0=rojo, 50=ámbar, 100=verde
-    const clamp = (x,min,max)=>Math.max(min,Math.min(max,x));
-    const t = clamp(p,0,100)/100;
-    // interp entre rojo(168,35,26) -> ámbar(191,174,90) -> verde(33,140,95)
-    let r,g,b;
-    if (t<0.5) {
-      const u = t/0.5; r = 168 + (191-168)*u; g = 35 + (174-35)*u; b = 26 + (90-26)*u;
-    } else {
-      const u = (t-0.5)/0.5; r = 191 + (33-191)*u; g = 174 + (140-174)*u; b = 90 + (95-90)*u;
-    }
-    return `rgb(${r|0},${g|0},${b|0})`;
-  }
-
-  function dibujar() {
-    const modo = selModo ? selModo.value : 'juntos';
-    const met = selMet ? selMet.value : 'wr';
-  // Ajustar estilo del grid: en 'vs' solo para 'hist' activamos espaciado especial y visuales
-  const isVsHist = (modo==='vs' && met==='hist');
-  if (grid) {
-    grid.classList.toggle('vs-mode', isVsHist);
-    grid.dataset.vsActive = isVsHist ? '1' : '0';
-  }
-  const infoEl = document.getElementById('sinergiasInfo');
-  // Ya no filtramos por mínimos en datos; solo en la lista de jugadores
-  const min = 0;
-    const jugadoresSel = multi ? Array.from(multi.options).filter(o=>o.selected).map(o=>o.value) : [];
-    const rowsSrc = window.dataRowsOriginal || [];
-    const idxFecha = window.idxFecha;
-    let rows = rowsSrc;
-    try { rows = filtrarPorAnio(rowsSrc, idxFecha, anioSeleccionado||'Histórico'); } catch(_){}
-  // Guardar scroll del multiselect para no perder posición tras re-render
-  const prevScroll = multi ? multi.scrollTop : 0;
-  const { jugadores, datos } = computeSinergias(rows, modo, jugadoresSel, min);
-    if (!jugadores.length) {
-      grid.innerHTML = '<div style="text-align:center;color:#b0b0b0;">Seleccioná jugadores con el botón “Jugadores”.</div>';
-      return;
-    }
-    // Actualizar leyenda corta
-    if (infoEl) {
-      if (isVsHist) infoEl.textContent = 'En enfrentados: leé por filas. El color aplica al jugador de la fila vs el de la columna.';
-      else infoEl.textContent = (met==='wr') ? 'WR excluye empates. Pasá el mouse por cada celda para detalles.' : 'Pasá el mouse por cada celda para detalles.';
-    }
-    // Rango dinámico para DG total: escala simétrica alrededor de 0 en función del máximo absoluto actual
-    let maxAbsGdTot = 0;
-    if (met === 'gdt') {
-      for (const s of datos.values()) {
-        const a = Math.abs(s.gdTot || 0);
-        if (a > maxAbsGdTot) maxAbsGdTot = a;
-      }
-      if (maxAbsGdTot === 0) maxAbsGdTot = 1; // evitar división por cero; 0 -> ámbar (50%)
-    }
-  // construir grid headers
-    const n = jugadores.length;
-    // Ajuste adaptativo de tipografía/alto de celda según cantidad de jugadores
-    // Objetivo: con pocos jugadores, letras más grandes; a medida que crece n, reducir hasta un mínimo.
-    // Cuando alcanza el mínimo, el contenedor ya usa scroll por overflow.
-    // Parámetros de escala (pueden ajustarse tras probar):
-  const baseFontEm = 0.95;   // em base
-  const minFontEm = 0.66;    // límite inferior (un poco más pequeño)
-  const baseMinH = 42;       // px base alto mínimo de celda
-  const minMinH = 28;        // px límite inferior (un poco más pequeño)
-    // Niveles donde empezamos a reducir tipografía: a partir de 8 jugadores suavemente, llegando al mínimo en ~22
-    const startShrinkN = 8;
-    const endShrinkN = 22;
-    let scaleT = 0;
-    if (n > startShrinkN) {
-      scaleT = Math.min(1, (n - startShrinkN) / Math.max(1, (endShrinkN - startShrinkN)));
-    }
-  // Aplicar zoom global multiplicativo sobre la escala adaptativa
-  const fontEm = (baseFontEm - (baseFontEm - minFontEm) * scaleT) * window._sinZoomFactor;
-  const minH = Math.round((baseMinH - (baseMinH - minMinH) * scaleT) * window._sinZoomFactor);
-    // Aplicar como variables CSS al grid
-    grid.style.setProperty('--sin-font', fontEm + 'em');
-    grid.style.setProperty('--sin-minh', minH + 'px');
-    grid.style.display = 'grid';
-    // Añadir columna de resumen (W/Total) solo en vs+hist
-    // También ajustar mínimas de columnas un poco con la escala: bajarlas cuando la fuente es más chica
-  let colMin = Math.max(44, Math.round(72 - 24 * scaleT)); // de 72px a 44px
-  colMin = Math.max(28, Math.round(colMin * window._sinZoomFactor)); // también afectado por zoom, con piso 28px
-    // Escalar columnas fijas (nombre y G/T) con el zoom
-  const firstCol = Math.max(72, Math.round(140 * window._sinZoomFactor));
-  const sumCol = Math.max(36, Math.round(60 * window._sinZoomFactor));
-    if (isVsHist) {
-      grid.style.gridTemplateColumns = `${firstCol}px ${sumCol}px repeat(${n}, minmax(${colMin}px, 1fr))`;
-    } else {
-      grid.style.gridTemplateColumns = `${firstCol}px repeat(${n}, minmax(${colMin}px, 1fr))`;
-    }
-    // Ajustar offset pegajoso izquierdo (coincide con la primera columna fija)
-    const leftSticky = firstCol;
-    grid.style.setProperty('--sin-left-sticky', leftSticky + 'px');
-    let html = '';
-  // fila header
-  html += `<div class="sinergias-cell sinergias-row-header sinergias-col-header" style="background:#23263a;"></div>`;
-  if (isVsHist) html += `<div class="sinergias-cell gt-summary sinergias-col-header" style="font-weight:700;background:#23263a;">G/T</div>`;
-  // Header de columnas: usar abreviatura si es muy largo (máx 8-10 caracteres), conservar nombre completo en title
-  for (let j=0;j<n;j++) {
-    const full = jugadores[j];
-    let short = full;
-    if (full.length > 10) short = full.split(' ').map(p=>p[0]).join('').slice(0,4) + ' ' + full.split(' ').slice(-1)[0].slice(0,6);
-    if (short.length > 10) short = short.slice(0,9) + '…';
-    html += `<div class="sinergias-cell sinergias-col-header" title="${full.replace(/\"/g,'&quot;')}" style="font-weight:700;background:#23263a;">${short}</div>`;
-  }
-    for (let i=0;i<n;i++) {
-      const bandClass = isVsHist ? (i % 2 === 0 ? ' vs-band-even' : ' vs-band-odd') : '';
-      const sepClass = (isVsHist && i>0) ? ' vs-row-sep' : '';
-      // header columna izquierda
-  const rowHeaderAttrs = isVsHist ? ` data-row="${i}" class="sinergias-cell vs-row-header sinergias-row-header${bandClass}${sepClass}"` : ` class="sinergias-cell sinergias-row-header"`;
-      {
-        const full = jugadores[i];
-        let short = full;
-        if (full.length > 14) short = full.split(' ').map(p=>p[0]).join('').slice(0,4) + ' ' + full.split(' ').slice(-1)[0].slice(0,8);
-        if (short.length > 14) short = short.slice(0,13) + '…';
-        html += `<div${rowHeaderAttrs} title="${full.replace(/\"/g,'&quot;')}" style="font-weight:700;background:#23263a;">${short}</div>`;
-      }
-      // columna resumen G/Total a la derecha del nombre (solo vs+hist)
-      if (isVsHist) {
-        let tot = 0, wins = 0;
-        for (let j=0;j<n;j++) {
-          if (j===i) continue;
-          const kSum = jugadores[i]+"|"+jugadores[j];
-          const sSum = datos.get(kSum);
-          if (sSum) {
-            tot++;
-            if (sSum.w > sSum.l) wins++;
-          }
-        }
-        const pct = tot ? Math.round((wins / tot) * 100) : 0;
-        // Mapear porcentaje a color (0-25 rojo, 25-50 amarillo, 50-75 verde claro, 75-100 verde oscuro)
-        let pctColor = '#a8231a'; // rojo
-        if (pct >= 75) pctColor = '#1f8057'; // verde oscuro
-        else if (pct >= 50) pctColor = '#33b976'; // verde claro
-        else if (pct >= 25) pctColor = '#d2b531'; // amarillo
-        const sumAttrs = ` data-row="${i}" class="sinergias-cell vs-cell gt-summary${bandClass}${sepClass}"`;
-        html += `<div${sumAttrs} title="Ganados/Total respecto a rivales visibles" style="background:#23263a;">
-          <div class="gt-top" style="color:${pctColor};">${wins}/${tot}</div>
-          <div class="gt-sub" style="color:${pctColor};">${pct}%</div>
-        </div>`;
-      }
-      for (let j=0;j<n;j++) {
-        if (i===j) { html += `<div class="sinergias-cell disabled">—</div>`; continue; }
-        const k = (modo==='juntos')? (jugadores[i] < jugadores[j] ? jugadores[i]+"|"+jugadores[j] : jugadores[j]+"|"+jugadores[i]) : (jugadores[i]+"|"+jugadores[j]);
-        const s = datos.get(k);
-        if (!s) { html += `<div class="sinergias-cell" style="opacity:.25;">·</div>`; continue; }
-  let valText = '', bg = '#1e2232', title='';
-  if (met==='wr') {
-    valText = `${s.wr.toFixed(0)}%`;
-    bg = colorWR(s.wr);
-  } else if (met==='hist') {
-    // Historial desde la perspectiva de la FILA contra la COLUMNA
-    const a = jugadores[i], b = jugadores[j];
-    const ganador = (s.w > s.l) ? a : (s.w < s.l ? b : 'Empate');
-    const denom = (s.w + s.l);
-    const p = denom === 0 ? 50 : (s.w / denom) * 100; // color respecto a la fila
-    bg = colorWR(p);
-  // No mostrar empates en el valor: solo W-L
-  valText = `<div class="sinergias-hist"><div class="hist-val">${s.w}-${s.l}</div><div class="hist-winner">${ganador}</div></div>`;
-  } else if (met==='gd') {
-    valText = (s.gdMed>=0?'+':'')+s.gdMed.toFixed(2);
-    const scaled = Math.max(-3, Math.min(3, s.gdMed));
-    const p = (scaled+3)/6*100;
-    bg = colorWR(p);
-  } else if (met==='gdt') {
-    valText = (s.gdTot>=0?'+':'')+s.gdTot;
-    const p = ((s.gdTot / maxAbsGdTot) + 1) * 50;
-    bg = colorWR(p);
-  } else {
-    // Partidos (pj)
-    valText = `${s.pj}`;
-    const p = Math.min(1, s.pj/10)*100;
-    bg = colorWR(p);
-  }
-  // Tooltips
-  if (modo==='juntos') {
-    title = `${jugadores[i]} + ${jugadores[j]}\nPJ ${s.pj} | W ${s.w} · E ${s.e} · L ${s.l}\nWR ${s.wr.toFixed(1)}%\nDG total ${(s.gdTot>=0?'+':'')+s.gdTot} | DG medio ${(s.gdMed>=0?'+':'')+s.gdMed.toFixed(2)}`;
-  } else {
-    if (met === 'hist') {
-      const a = jugadores[i], b = jugadores[j];
-      const ganador = (s.w > s.l) ? a : (s.w < s.l ? b : 'Empate en historial');
-      const perdedor = (s.w > s.l) ? b : (s.w < s.l ? a : '—');
-  // No mostrar empates en el tooltip: solo W y L
-  title = `${a} vs ${b}\nPartidos: ${s.pj}\nHistorial: ${s.w} W · ${s.l} L\n${ganador==='Empate en historial' ? 'Historial: Empate' : `Ganador: ${ganador}\nPerdedor: ${perdedor}`}`;
-    } else {
-      title = `${jugadores[i]} vs ${jugadores[j]}\nPF ${s.pj} | W ${s.w} · E ${s.e} · L ${s.l}\nWR ${s.wr.toFixed(1)}%\nDG total ${(s.gdTot>=0?'+':'')+s.gdTot} | DG medio ${(s.gdMed>=0?'+':'')+s.gdMed.toFixed(2)}`;
-    }
-  }
-        // Dataset para tooltip custom
-        const ds = ` data-a="${jugadores[i]}" data-b="${jugadores[j]}" data-pj="${s.pj}" data-w="${s.w}" data-e="${s.e}" data-l="${s.l}" data-wr="${s.wr.toFixed(1)}" data-gdtot="${(s.gdTot>=0?'+':'')+s.gdTot}" data-gdmed="${(s.gdMed>=0?'+':'')+s.gdMed.toFixed(2)}" data-met="${met}" data-modo="${modo}"`;
-        const cellAttrs = isVsHist ? ` data-row="${i}" class="sinergias-cell vs-cell${bandClass}${sepClass}"` : ` class="sinergias-cell"`;
-        html += `<div${cellAttrs}${ds} title="${title.replace(/\"/g,'&quot;')}" style="background:${bg};color:#000;box-shadow:inset 0 0 0 1px #0002;">${valText}</div>`;
-      }
-    }
-  grid.innerHTML = html;
-  // Quitar title nativo de celdas de datos (no headers) para evitar doble tooltip
-  grid.querySelectorAll('.sinergias-cell:not(.sinergias-col-header)[title]').forEach(el=>{
-    el.setAttribute('aria-label', el.getAttribute('title')||''); // accesibilidad
-    el.removeAttribute('title');
-  });
-  // === Tooltip custom (evita fallos del title nativo en algunos navegadores) ===
-  if (!document.getElementById('sinergiasTooltip')) {
-    const tip = document.createElement('div');
-    tip.id = 'sinergiasTooltip';
-    tip.style.position = 'fixed';
-    tip.style.pointerEvents = 'none';
-    tip.style.zIndex = '1000';
-    tip.style.background = '#161a24';
-    tip.style.color = '#ffd700';
-    tip.style.padding = '6px 8px';
-    tip.style.border = '1px solid #ffd70055';
-    tip.style.borderRadius = '8px';
-    tip.style.fontSize = '12px';
-    tip.style.fontWeight = '600';
-    tip.style.boxShadow = '0 2px 8px #000a, 0 0 0 1px #0006';
-    tip.style.maxWidth = '260px';
-    tip.style.lineHeight = '1.25';
-    tip.style.display = 'none';
-    document.body.appendChild(tip);
-  }
-  const tipEl = document.getElementById('sinergiasTooltip');
-  // Delegado de eventos (una sola vez)
-  if (!grid.dataset.tooltipBound) {
-    grid.addEventListener('mousemove', (e)=>{
-      const cell = e.target.closest('.sinergias-cell');
-      if (!cell || !grid.contains(cell) || cell.classList.contains('disabled')) { tipEl.style.display='none'; return; }
-      // Construir contenido según data
-      const a = cell.dataset.a, b = cell.dataset.b;
-      if (!a || !b) { tipEl.style.display='none'; return; }
-      const pj = cell.dataset.pj, w = cell.dataset.w, l = cell.dataset.l, emp = cell.dataset.e;
-      const wr = cell.dataset.wr, gdTot = cell.dataset.gdtot, gdMed = cell.dataset.gdmed;
-      const modoC = cell.dataset.modo, metC = cell.dataset.met;
-      let lines = [];
-      if (modoC === 'juntos') {
-        lines.push(`<strong>${a} + ${b}</strong>`);
-        lines.push(`PJ ${pj} | W ${w} · E ${emp} · L ${l}`);
-        lines.push(`WR ${wr}%`);
-        lines.push(`DG total ${gdTot} | DG medio ${gdMed}`);
-      } else if (metC === 'hist') {
-        lines.push(`<strong>${a} vs ${b}</strong>`);
-        lines.push(`PJ ${pj} | W ${w} · L ${l}`);
-        const ganador = (Number(w)>Number(l))?a: (Number(l)>Number(w)? b: 'Empate');
-        if (ganador==='Empate') lines.push('Historial: Empate'); else lines.push(`Ganador: ${ganador}`);
-      } else {
-        lines.push(`<strong>${a} vs ${b}</strong>`);
-        lines.push(`PJ ${pj} | W ${w} · E ${emp} · L ${l}`);
-        lines.push(`WR ${wr}%`);
-        lines.push(`DG total ${gdTot} | DG medio ${gdMed}`);
-      }
-      tipEl.innerHTML = lines.join('<br>');
-      const margin = 14;
-      let x = e.clientX + margin;
-      let y = e.clientY + margin;
-      const vw = window.innerWidth, vh = window.innerHeight;
-      const rect = tipEl.getBoundingClientRect();
-      // Ajustar si se sale
-      if (x + rect.width + 8 > vw) x = e.clientX - rect.width - margin;
-      if (y + rect.height + 8 > vh) y = e.clientY - rect.height - margin;
-      tipEl.style.left = x + 'px';
-      tipEl.style.top = y + 'px';
-      tipEl.style.display = 'block';
-    });
-    grid.addEventListener('mouseleave', ()=>{ tipEl.style.display='none'; });
-    grid.dataset.tooltipBound = '1';
-  }
-  // Agregar o limpiar líneas separadoras entre filas sólo en vs+hist
-  // Limpiar líneas anteriores por si re-renderiza
-  grid.querySelectorAll('.vs-row-line').forEach(n=>n.remove());
-  if (isVsHist) {
-    const headers = Array.from(grid.querySelectorAll('.vs-row-header'));
-    const rectGrid = grid.getBoundingClientRect();
-    for (let idx = 1; idx < headers.length; idx++) {
-      const prev = headers[idx-1].getBoundingClientRect();
-      const curr = headers[idx].getBoundingClientRect();
-      const prevBottom = prev.bottom - rectGrid.top;
-      const currTop = curr.top - rectGrid.top;
-      const mid = (prevBottom + currTop) / 2; // punto medio entre filas
-      const line = document.createElement('div');
-      line.className = 'vs-row-line';
-      line.style.top = `${mid - 1.5}px`; // centrar línea de 3px
-      // Ajuste ancho inicial (lo sobreescribimos luego para cubrir scrollWidth)
-      grid.appendChild(line);
-    }
-    const adjustVsRowLines = () => {
-      const sw = grid.scrollWidth; // ancho total desplazable
-      const w = Math.max(sw - 12, 0); // restar márgenes left/right simulados (6px c/u)
-      grid.querySelectorAll('.vs-row-line').forEach(line => {
-        line.style.right = 'auto';
-        line.style.left = '6px';
-        line.style.width = w + 'px';
-      });
-    };
-    adjustVsRowLines();
-    // Ajustar nuevamente tras el frame (por si fuentes/zoom cambian medidas)
-    requestAnimationFrame(adjustVsRowLines);
-    // Refuerzo: asegurar que headers (nombre + G/T) mantengan sticky left
-    const enforceStickyCols = () => {
-      const leftSticky = parseFloat(getComputedStyle(grid).getPropertyValue('--sin-left-sticky')) || 0;
-      grid.querySelectorAll('.sinergias-row-header').forEach(h => {
-        h.style.position = 'sticky';
-        h.style.left = '0px';
-      });
-      grid.querySelectorAll('.gt-summary').forEach(g => {
-        g.style.position = 'sticky';
-        g.style.left = leftSticky + 'px';
-      });
-    };
-    enforceStickyCols();
-    requestAnimationFrame(enforceStickyCols);
-    // Vincular a resize una sola vez por sesión
-    if (!grid.dataset.vsLinesResizeBound) {
-      window.addEventListener('resize', () => { adjustVsRowLines(); enforceStickyCols(); });
-      grid.addEventListener('scroll', () => { /* no cambia scrollWidth, pero si zoom dinámico forzara re-render no necesitamos aquí */ });
-      grid.dataset.vsLinesResizeBound = '1';
-    }
-  }
-  // En modo vs, resaltar banda de fila al pasar el mouse
-  if (!grid.dataset.vsHoverBound) {
-    const clearHL = ()=>{
-      const prev = grid.dataset.activeRow;
-      if (prev!=null) {
-        grid.querySelectorAll(`[data-row="${prev}"]`).forEach(el=>el.classList.remove('row-hl'));
-        delete grid.dataset.activeRow;
-      }
-    };
-    grid.addEventListener('mouseleave', () => { if (grid.dataset.vsActive==='1') clearHL(); else clearHL(); });
-    grid.addEventListener('mouseover', (e) => {
-      if (grid.dataset.vsActive!=='1') return;
-      const cell = e.target.closest('.sinergias-cell');
-      if (!cell) return;
-      const r = cell.getAttribute('data-row');
-      if (r==null) return;
-      const prev = grid.dataset.activeRow;
-      if (prev===r) return;
-      if (prev!=null) grid.querySelectorAll(`[data-row="${prev}"]`).forEach(el=>el.classList.remove('row-hl'));
-      grid.querySelectorAll(`[data-row="${r}"]`).forEach(el=>el.classList.add('row-hl'));
-      grid.dataset.activeRow = r;
-    });
-    grid.dataset.vsHoverBound = '1';
-  }
-  // Si no está activo vs+hist, asegurarse de limpiar cualquier resalto previo
-  if (!isVsHist) {
-    const prev = grid.dataset.activeRow;
-    if (prev!=null) {
-      grid.querySelectorAll(`[data-row="${prev}"]`).forEach(el=>el.classList.remove('row-hl'));
-      delete grid.dataset.activeRow;
-    }
-  }
-  // Restaurar scroll del multiselect si aplica
-  if (multi) { try { multi.scrollTop = prevScroll; requestAnimationFrame(() => { multi.scrollTop = prevScroll; }); } catch(_){} }
-  }
-  // primera pintura
-  // Si es la primera vez que entramos a Sinergias en la sesión, seleccionar todos por defecto
-  if (!window._sinergiasFirstInit) {
-    if (multi) Array.from(multi.options).forEach(o=>o.selected=true);
-    if (count && multi) count.textContent = String(multi.options.length);
-    window._sinergiasFirstInit = true;
-  }
-  dibujar();
 }

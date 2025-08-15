@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancha Gonsa</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- NAVBAR MODERNO Y RESPONSIVE -->
+  <nav class="navbar">
+    <div class="navbar-brand" style="display:flex;align-items:center;gap:0.7em;">
+      <span class="navbar-logo">⚽</span>
+      <span class="navbar-title">Cancha Gonsa</span>
+      <div id="selectorAnioContainer" style="margin-left:1.5em;"></div>
+    </div>
+    <button class="navbar-toggle" id="navbarToggle" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="navbar-links" id="navbarLinks">
+      <li><a href="#tab-general" class="tab-btn active" data-tab="general">Tabla General</a></li>
+      <li><a href="#tab-goleadores" class="tab-btn" data-tab="goleadores">Goleadores</a></li>
+      <li><a href="#tab-asistencias" class="tab-btn" data-tab="asistencias">Asistencias</a></li>
+      <li><a href="#tab-historial" class="tab-btn" data-tab="historial">Historial</a></li>
+      <li><a href="#tab-comparador" class="tab-btn" data-tab="comparador">Comparador</a></li>
+      <li><a href="#tab-dashboard-jugador" class="tab-btn" data-tab="dashboard-jugador">Dashboard Jugador</a></li>
+    </ul>
+  </nav>
+
+
+
+  <section class="tabla tab-content" id="tab-general" style="display:block;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Tabla General</h1>
+    <div id="tablaPuntosTotales"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-goleadores" style="display:none;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Tabla de Goleadores</h1>
+    <div id="tablaGoleadores"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-asistencias" style="display:none;">
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Tribunal de Asistencias</h1>
+    <div id="tablaTribunalAsistencias"></div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-historial" style="display:none;">
+    <h2 class="titulo-pestana">Historial de Partidos</h2>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+      <!-- El selector de fechas se inyectará dinámicamente dentro de la tarjeta del partido -->
+      <div id="detallePartido"></div>
+    </div>
+  </section>
+
+  <section class="tabla tab-content" id="tab-comparador" style="display:none;">
+    <h1 class="titulo-comparador">Comparador de Jugadores</h1>
+    <div class="comparador-controles" style="display:flex;justify-content:center;gap:2em;align-items:flex-start;flex-wrap:wrap;margin-bottom:2.5em;">
+      <div>
+        <label for="comparadorJugador1">Jugador 1:</label>
+        <select id="comparadorJugador1"></select>
+      </div>
+      <div>
+        <label for="comparadorJugador2">Jugador 2:</label>
+        <select id="comparadorJugador2"></select>
+      </div>
+      <div style="display:flex;align-items:end;">
+        <button id="comparadorRandomBtn" type="button" style="margin-left:1.2em;padding:0.5em 1.2em;font-size:1.08em;font-weight:600;background:linear-gradient(90deg,#ffd700 0%,#ffe066 100%);color:#23263a;border:none;border-radius:8px;box-shadow:0 2px 12px #ffd70033;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;">🎲 Al azar</button>
+      </div>
+    </div>
+    <div id="comparadorEstadisticas"></div>
+  </section>
+
+  <!-- NUEVA SECCIÓN DASHBOARD JUGADOR -->
+  <section class="tabla tab-content" id="tab-dashboard-jugador" style="display:none;">
+
+    <h1 style="text-align:center;font-size:2.2em;color:var(--color-primario,#ffd700);margin-top:0.5em;margin-bottom:1.2em;">Dashboard Individual de Jugador</h1>
+    <!-- Submenú de pestañas internas -->
+    <div id="dashboardJugadorTabs" style="display:flex;justify-content:center;gap:1.2em;margin-bottom:2em;">
+      <button id="tabDashboardEstadisticasBtn" class="dashboard-tab-btn active" style="padding:0.5em 1.5em;font-size:1.08em;font-weight:600;background:linear-gradient(90deg,#ffd700 0%,#ffe066 100%);color:#23263a;border:none;border-radius:8px;box-shadow:0 2px 12px #ffd70033;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;">Estadísticas</button>
+      <button id="tabDashboardLogrosBtn" class="dashboard-tab-btn" style="padding:0.5em 1.5em;font-size:1.08em;font-weight:600;background:#23263a;color:#ffd700;border:1.5px solid #ffd700;border-radius:8px;box-shadow:0 2px 12px #ffd70022;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;">Info de Logros</button>
+    </div>
+    <!-- Contenido de pestañas internas -->
+    <div id="dashboardJugadorTabEstadisticas" style="display:block;">
+      <div class="dashboard-jugador-controles" style="display:flex;justify-content:center;gap:2em;align-items:flex-start;flex-wrap:wrap;margin-bottom:2.5em;">
+        <div>
+          <label for="dashboardJugadorSelect">Selecciona un jugador:</label>
+          <select id="dashboardJugadorSelect"></select>
+        </div>
+      </div>
+      <div class="dashboard-jugador-grid">
+        <div class="dashboard-jugador-grafico-barras">
+          <div style="display:flex;justify-content:center;gap:1em;margin-bottom:0.7em;width:100%;align-items:center;">
+            <select id="dashboardBarChartTipo" style="padding:0.3em 0.7em;font-size:1em;border-radius:6px;border:1.5px solid #ffd700;background:#23263a;color:#ffd700;font-weight:600;min-width:110px;text-align:center;">
+              <option value="goles">Goles</option>
+              <option value="puntos">Puntos</option>
+            </select>
+            <select id="dashboardBarChartAgrup" style="padding:0.3em 0.7em;font-size:1em;border-radius:6px;border:1.5px solid #ffd700;background:#23263a;color:#ffd700;font-weight:600;min-width:90px;text-align:center;">
+              <option value="mes">Mes</option>
+              <option value="dia">Día</option>
+            </select>
+            <select id="dashboardBarChartAnio" style="padding:0.3em 0.7em;font-size:1em;border-radius:6px;border:1.5px solid #ffd700;background:#23263a;color:#ffd700;font-weight:600;min-width:90px;text-align:center;">
+              <option value="todos">Todos</option>
+              <!-- Opciones de año se llenarán dinámicamente con JS -->
+            </select>
+          </div>
+          <div id="dashboardJugadorGraficoBarras"></div>
+        </div>
+        <div class="dashboard-jugador-panel-izq">
+          <div class="dashboard-jugador-tarjeta" id="dashboardJugadorResumen"></div>
+          <div class="dashboard-jugador-medallas" id="dashboardJugadorLogros" style="margin-bottom:-2em;"></div>
+        </div>
+        <div class="dashboard-jugador-grafico-torta"><div id="dashboardJugadorGraficoTorta"></div></div>
+      </div>
+      <h2 class="dashboard-jugador-titulo-anual" style="color:var(--color-secundario);text-align:center;margin:1.5em 0 0.5em 0;font-size:1.35em;">Resumen Anual del Jugador</h2>
+      <div class="dashboard-jugador-tabla-anual" id="dashboardJugadorTablaAnual">
+      <div class="dashboard-jugador-tabla-anual" id="dashboardJugadorTablaAnual">
+        <h2 class="dashboard-jugador-titulo-anual" style="color:var(--color-secundario);text-align:center;margin:0 0 1em 0;font-size:1.35em;">Resumen Anual del Jugador</h2>
+      </div>
+      </div>
+    </div>
+    <div id="dashboardJugadorTabLogros" style="display:none;max-width:700px;margin:0 auto 2em auto;padding:1.5em 1.2em;background:#23263a;border-radius:16px;box-shadow:0 2px 16px #ffd70022;">
+      <h2 style="color:#ffd700;text-align:center;margin-bottom:1em;font-size:1.4em;">Información de Logros y Niveles</h2>
+      <p style="color:#cdcdcd;text-align:center;margin-bottom:2em;">Descubre los distintos tipos de logros, los niveles y los requisitos para alcanzarlos. ¡Superate y colecciona todas las medallas!</p>
+      <div class="logros-info-tarjetas" style="display:flex;flex-direction:column;gap:2em;">
+        <!-- Tarjeta Goles Totales -->
+        <div class="logro-tarjeta" style="background:#23263a;border-radius:14px;box-shadow:0 2px 12px #ffd70022;padding:1.4em 1.3em 4.8em 1.3em;margin-bottom:0.5em;">
+          <div style="display:flex;align-items:center;gap:1em;margin-bottom:0.7em;">
+            <span style="font-size:2.1em;">⚽</span>
+            <span style="font-size:1.18em;font-weight:700;color:#ffd700;">Goles Totales</span>
+          </div>
+          <div style="color:#ffd700b0;font-size:1em;margin-bottom:1em;">Suma todos los goles que hiciste en la historia del torneo.</div>
+          <div style="display:flex;gap:1em;justify-content:center;flex-wrap:wrap;">
+            <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:1em;justify-items:center;width:100%;max-width:800px;">
+              <div class="dashboard-jugador-medalla logros nivel-1">
+                <span style="font-size:1.3em; margin-top:0.3em;">⚽</span>
+                <div class="medalla-nivel-nombre nivel-1" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#7c4a03;">
+                  Madera<br><span style="font-size:1.0em; color:#ffd700b0;">1 gol</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-2">
+                <span style="font-size:1.3em; margin-top:0.3em;">⚽</span>
+                <div class="medalla-nivel-nombre nivel-2" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#a97c50;">
+                  Bronce<br><span style="font-size:1.0em; color:#ffd700b0;">15 goles</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-3">
+                <span style="font-size:1.3em; margin-top:0.3em;">⚽</span>
+                <div class="medalla-nivel-nombre nivel-3" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#bfc1c2;">
+                  Hierro<br><span style="font-size:1.0em; color:#ffd700b0;">40 goles</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-4">
+                <span style="font-size:1.3em; margin-top:0.3em;">⚽</span>
+                <div class="medalla-nivel-nombre nivel-4" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#e0e0e0;">
+                  Plata<br><span style="font-size:1.0em; color:#ffd700b0;">80 goles</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-5">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏆</span>
+                <div class="medalla-nivel-nombre nivel-5" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#ffd700;">
+                  Oro<br><span style="font-size:1.0em; color:#ffd700b0;">150 goles</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-6">
+                <span style="font-size:1.5em; margin-top:0.3em;">💎</span>
+                <div class="medalla-nivel-nombre nivel-6" style="font-size:0.5em;margin-top:2.1em;line-height:1.5;text-align:center;white-space:normal;color:#00e6e6;">
+                  Diamante<br><span style="font-size:1.0em; color:#ffd700b0;">300 goles</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-7">
+                <span style="font-size:1.5em; margin-top:0.2em;">⚡</span>
+                <div class="medalla-nivel-nombre nivel-7" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color: #ffd700; text-shadow: 0 0 8px #baffff, 0 0 2px #ffd700;">
+                  Dios del Futbol<br><span style="font-size:1.0em; color:#ffd700b0;">600 goles</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+        <!-- Tarjeta Partidos Jugados -->
+        <div class="logro-tarjeta" style="background:#23263a;border-radius:14px;box-shadow:0 2px 12px #ffd70022;padding:1.4em 1.3em 4.8em 1.3em;margin-bottom:2.7em;">
+          <div style="display:flex;align-items:center;gap:1em;margin-bottom:0.7em;">
+            <span style="font-size:2.1em;">📅</span>
+            <span style="font-size:1.18em;font-weight:700;color:#ffd700;">Partidos Jugados</span>
+          </div>
+          <div style="color:#ffd700b0;font-size:1em;margin-bottom:1em;">Cuenta todos los partidos en los que participaste, sin importar el resultado.</div>
+          <div style="display:flex;gap:1em;justify-content:center;flex-wrap:wrap;">
+            <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:1em;justify-items:center;width:100%;max-width:800px;">
+              <div class="dashboard-jugador-medalla logros nivel-1">
+                <span style="font-size:1.3em; margin-top:0.3em;">🎽</span>
+                <div class="medalla-nivel-nombre nivel-1" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#7c4a03;">
+                  Madera<br><span style="font-size:1.0em; color:#ffd700b0;">1 PJ</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-2">
+                <span style="font-size:1.3em; margin-top:0.3em;">🎽</span>
+                <div class="medalla-nivel-nombre nivel-2" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#a97c50;">
+                  Bronce<br><span style="font-size:1.0em; color:#ffd700b0;">20 PJ</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-3">
+                <span style="font-size:1.3em; margin-top:0.3em;">🎽</span>
+                <div class="medalla-nivel-nombre nivel-3" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#bfc1c2;">
+                  Hierro<br><span style="font-size:1.0em; color:#ffd700b0;">50 PJ</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-4">
+                <span style="font-size:1.3em; margin-top:0.3em;">🎽</span>
+                <div class="medalla-nivel-nombre nivel-4" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#e0e0e0;">
+                  Plata<br><span style="font-size:1.0em; color:#ffd700b0;">75 PJ</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-5">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏆</span>
+                <div class="medalla-nivel-nombre nivel-5" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#ffd700;">
+                  Oro<br><span style="font-size:1.0em; color:#ffd700b0;">100 PJ</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-6">
+                <span style="font-size:1.5em; margin-top:0.3em;">💎</span>
+                <div class="medalla-nivel-nombre nivel-6" style="font-size:0.5em;margin-top:2.1em;line-height:1.5;text-align:center;white-space:normal;color:#00e6e6;">
+                  Diamante<br><span style="font-size:1.0em; color:#ffd700b0;">150 PJ</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-7">
+                <span style="font-size:1.5em; margin-top:0.2em;">⚡</span>
+                <div class="medalla-nivel-nombre nivel-7" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color: #ffd700; text-shadow: 0 0 8px #baffff, 0 0 2px #ffd700;">
+                  Dueño del gimnasio<br><span style="font-size:1.0em; color:#ffd700b0;">300 PJ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <!-- Tarjeta Victorias -->
+        <div class="logro-tarjeta" style="background:#23263a;border-radius:14px;box-shadow:0 2px 12px #ffd70022;padding:1.4em 1.3em 4.8em 1.3em;margin-bottom:0.5em;">
+          <div style="display:flex;align-items:center;gap:1em;margin-bottom:0.7em;">
+            <span style="font-size:2.1em;">🏆</span>
+            <span style="font-size:1.18em;font-weight:700;color:#ffd700;">Victorias</span>
+          </div>
+          <div style="color:#ffd700b0;font-size:1em;margin-bottom:1em;">Suma todas las veces que tu equipo ganó el partido (3 puntos).</div>
+          <div style="display:flex;gap:1em;justify-content:center;flex-wrap:wrap;">
+            <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:1em;justify-items:center;width:100%;max-width:800px;">
+              <div class="dashboard-jugador-medalla logros nivel-1">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏅</span>
+                <div class="medalla-nivel-nombre nivel-1" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#7c4a03;">
+                  Madera<br><span style="font-size:1.0em; color:#ffd700b0;">1 victoria</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-2">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏅</span>
+                <div class="medalla-nivel-nombre nivel-2" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#a97c50;">
+                  Bronce<br><span style="font-size:1.0em; color:#ffd700b0;">15 victorias</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-3">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏅</span>
+                <div class="medalla-nivel-nombre nivel-3" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#bfc1c2;">
+                  Hierro<br><span style="font-size:1.0em; color:#ffd700b0;">30 victorias</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-4">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏅</span>
+                <div class="medalla-nivel-nombre nivel-4" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#e0e0e0;">
+                  Plata<br><span style="font-size:1.0em; color:#ffd700b0;">60 victorias</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-5">
+                <span style="font-size:1.3em; margin-top:0.3em;">🏆</span>
+                <div class="medalla-nivel-nombre nivel-5" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color:#ffd700;">
+                  Oro<br><span style="font-size:1.0em; color:#ffd700b0;">80 victorias</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-6">
+                <span style="font-size:1.5em; margin-top:0.3em;">💎</span>
+                <div class="medalla-nivel-nombre nivel-6" style="font-size:0.5em;margin-top:2.1em;line-height:1.5;text-align:center;white-space:normal;color:#00e6e6;">
+                  Diamante<br><span style="font-size:1.0em; color:#ffd700b0;">100 V</span>
+                </div>
+              </div>
+              <div class="dashboard-jugador-medalla logros nivel-7">
+                <span style="font-size:1.5em; margin-top:0.2em;">⚡</span>
+                <div class="medalla-nivel-nombre nivel-7" style="font-size:0.5em;margin-top:2.5em;line-height:1.5;text-align:center;white-space:normal;color: #ffd700; text-shadow: 0 0 8px #baffff, 0 0 2px #ffd700;">
+                  Máquina de Ganar<br><span style="font-size:1.0em; color:#ffd700b0;">250 V</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+      <!-- Texto informativo de logros eliminado a pedido del usuario -->
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+  <script>
+    // Submenú de pestañas internas en dashboard jugador
+    document.addEventListener('DOMContentLoaded', function() {
+      const btnEst = document.getElementById('tabDashboardEstadisticasBtn');
+      const btnLog = document.getElementById('tabDashboardLogrosBtn');
+      const tabEst = document.getElementById('dashboardJugadorTabEstadisticas');
+      const tabLog = document.getElementById('dashboardJugadorTabLogros');
+      if (btnEst && btnLog && tabEst && tabLog) {
+        btnEst.onclick = function() {
+          btnEst.classList.add('active');
+          btnLog.classList.remove('active');
+          tabEst.style.display = 'block';
+          tabLog.style.display = 'none';
+        };
+        btnLog.onclick = function() {
+          btnLog.classList.add('active');
+          btnEst.classList.remove('active');
+          tabLog.style.display = 'block';
+          tabEst.style.display = 'none';
+        };
+      }
+    });
+  </script>
+  <script>
+    // Navbar toggle para móvil
+    document.getElementById('navbarToggle').onclick = function() {
+      document.getElementById('navbarLinks').classList.toggle('open');
+      this.classList.toggle('open');
+    };
+    // Tabs con navbar
+    document.querySelectorAll('.navbar-links a.tab-btn').forEach(btn => {
+      btn.onclick = function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.querySelectorAll('.navbar-links a.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const tabId = this.getAttribute('href');
+        document.querySelector(tabId).style.display = 'block';
+        window.scrollTo({top:0,behavior:'smooth'});
+      };
+    });
+  </script>
+</body>
+</html>
