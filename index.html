@@ -78,7 +78,7 @@
     </div>
     <!-- NUEVO ORDEN: 1) Filtro partidos mínimos -->
     <div id="comparadorFiltroPartidosWrapper" style="display:flex;justify-content:center;align-items:center;gap:0.6em;margin:0 0 1.4em 0;flex-wrap:wrap;">
-      <label for="comparadorPartidosMinimos" style="font-size:1.05em;font-weight:600;">Partidos mínimos:</label>
+      <label for="comparadorPartidosMinimos" style="font-size:1.05em;font-weight:600;">Partidos mínimos individual:</label>
       <input type="number" id="comparadorPartidosMinimos" min="0" value="5" style="width:80px;height:2.2em;font-size:1.05em;text-align:center;border:1.5px solid #ffd700;background:#23263a;color:#ffd700;border-radius:6px;">
     </div>
     <!-- 2) Selects jugadores + botón azar -->
@@ -159,7 +159,7 @@
     </div>
     <!-- Contenido Tab: Sinergias -->
     <div id="comparadorTabSinergias" style="display:none;">
-      <div id="sinergiasControles" style="display:flex;justify-content:center;align-items:center;gap:1em;flex-wrap:wrap;margin:0 0 1.2em 0;">
+  <div id="sinergiasControles" style="display:flex;justify-content:center;align-items:center;gap:1em;flex-wrap:wrap;margin:0 0 1.2em 0;">
         <label for="sinModo" style="font-weight:600;">Modo:</label>
         <select id="sinModo" style="padding:0.35em 0.8em;font-size:1em;border-radius:6px;border:1.5px solid #ffd700;background:#23263a;color:#ffd700;font-weight:600;min-width:110px;text-align:center;">
           <option value="juntos" selected>Juntos</option>
@@ -173,7 +173,9 @@
           <option value="pj">Partidos</option>
         </select>
         
-        <button id="sinJugadoresBtn" type="button" style="padding:0.45em 0.9em;font-size:0.95em;font-weight:600;background:#23263a;color:#ffd700;border:1.5px solid #ffd700;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:0.5em;">Jugadores <span id="sinJugadoresCount" style="background:#ffd700;color:#23263a;padding:0 0.45em;border-radius:6px;font-size:0.85em;">0</span> ▼</button>
+  <button id="sinJugadoresBtn" type="button" style="padding:0.45em 0.9em;font-size:0.95em;font-weight:600;background:#23263a;color:#ffd700;border:1.5px solid #ffd700;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:0.5em;">Jugadores <span id="sinJugadoresCount" style="background:#ffd700;color:#23263a;padding:0 0.45em;border-radius:6px;font-size:0.85em;">0</span> ▼</button>
+  <label for="sinMinPartidosDupla" style="font-weight:600;">Partidos mínimos dupla:</label>
+  <input type="number" id="sinMinPartidosDupla" min="0" value="2" style="width:80px;height:2.2em;font-size:0.95em;text-align:center;border:1.5px solid #ffd700;background:#23263a;color:#ffd700;border-radius:6px;" title="Filtra celdas cuya dupla tenga menos partidos en conjunto/enfrentados según el modo.">
         <div id="sinJugadoresPanel" class="comparador-multiselect-panel" style="display:none;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4em;gap:0.6em;">
             <span style="font-size:0.8em;color:#b0b0b0;">Click para (des)seleccionar</span>

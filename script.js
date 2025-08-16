@@ -3284,6 +3284,7 @@ window.renderSinergias = function() {
   const selModo = document.getElementById('sinModo');
   const selMet = document.getElementById('sinMetrica');
   const inputMinComp = document.getElementById('comparadorPartidosMinimos');
+  const inputMinDupla = document.getElementById('sinMinPartidosDupla');
   // Estado de zoom (persistencia simple en memoria; se podría llevar a localStorage si querés)
   if (typeof window._sinZoomFactor !== 'number') {
     const z = Number(localStorage.getItem('sinZoomFactor'));
@@ -3398,6 +3399,15 @@ window.renderSinergias = function() {
   if (selMet && !selMet.dataset.sinMetHandler) {
     selMet.onchange = dibujar;
     selMet.dataset.sinMetHandler = '1';
+  }
+  if (inputMinDupla && !inputMinDupla.dataset.sinDuplaHandler) {
+    // restaurar desde localStorage
+    try {
+      const sv = localStorage.getItem('sinMinPartidosDupla');
+      if (sv!==null && sv!=='' && !isNaN(Number(sv))) inputMinDupla.value = sv;
+    } catch(_) {}
+    inputMinDupla.addEventListener('input', ()=>{ try { localStorage.setItem('sinMinPartidosDupla', String(inputMinDupla.value)); } catch(_) {} dibujar(); });
+    inputMinDupla.dataset.sinDuplaHandler='1';
   }
   // Escuchar cambios del filtro global de mínimos para actualizar la lista y re-dibujar
   if (inputMinComp && !inputMinComp.dataset.sinergiasListener) {
@@ -3541,6 +3551,7 @@ window.renderSinergias = function() {
   function dibujar() {
     const modo = selModo ? selModo.value : 'juntos';
     const met = selMet ? selMet.value : 'wr';
+    const minDupla = inputMinDupla ? Math.max(0, Number(inputMinDupla.value)||0) : 0;
   // Ajustar estilo del grid: en 'vs' solo para 'hist' activamos espaciado especial y visuales
   const isVsHist = (modo==='vs' && met==='hist');
   if (grid) {
@@ -3668,6 +3679,7 @@ window.renderSinergias = function() {
         const k = (modo==='juntos')? (jugadores[i] < jugadores[j] ? jugadores[i]+"|"+jugadores[j] : jugadores[j]+"|"+jugadores[i]) : (jugadores[i]+"|"+jugadores[j]);
         const s = datos.get(k);
         if (!s) { html += `<div class="sinergias-cell" style="opacity:.25;">·</div>`; continue; }
+        const insuf = s.pj < minDupla;
   let valText = '', bg = '#1e2232', title='';
   if (met==='wr') {
     valText = `${s.wr.toFixed(0)}%`;
@@ -3711,9 +3723,11 @@ window.renderSinergias = function() {
     }
   }
         // Dataset para tooltip custom
-        const ds = ` data-a="${jugadores[i]}" data-b="${jugadores[j]}" data-pj="${s.pj}" data-w="${s.w}" data-e="${s.e}" data-l="${s.l}" data-wr="${s.wr.toFixed(1)}" data-gdtot="${(s.gdTot>=0?'+':'')+s.gdTot}" data-gdmed="${(s.gdMed>=0?'+':'')+s.gdMed.toFixed(2)}" data-met="${met}" data-modo="${modo}"`;
-        const cellAttrs = isVsHist ? ` data-row="${i}" class="sinergias-cell vs-cell${bandClass}${sepClass}"` : ` class="sinergias-cell"`;
-        html += `<div${cellAttrs}${ds} title="${title.replace(/\"/g,'&quot;')}" style="background:${bg};color:#000;box-shadow:inset 0 0 0 1px #0002;">${valText}</div>`;
+  const ds = ` data-a="${jugadores[i]}" data-b="${jugadores[j]}" data-pj="${s.pj}" data-w="${s.w}" data-e="${s.e}" data-l="${s.l}" data-wr="${s.wr.toFixed(1)}" data-gdtot="${(s.gdTot>=0?'+':'')+s.gdTot}" data-gdmed="${(s.gdMed>=0?'+':'')+s.gdMed.toFixed(2)}" data-met="${met}" data-modo="${modo}" data-insuf="${insuf? '1':'0'}"`;
+  const cellAttrs = isVsHist ? ` data-row="${i}" class="sinergias-cell vs-cell${bandClass}${sepClass}${insuf?' insuf':''}"` : ` class="sinergias-cell${insuf?' insuf':''}"`;
+  const styleExtra = insuf? 'opacity:.35;filter:grayscale(0.35) brightness(0.85);' : '';
+  const badge = insuf? `<span style='position:absolute;top:2px;right:4px;font-size:0.55em;font-weight:700;color:#000;background:#ffd700cc;padding:1px 4px;border-radius:4px;'>${s.pj}</span>`:'';
+  html += `<div${cellAttrs}${ds} title="${title.replace(/\"/g,'&quot;')}" style="background:${bg};color:#000;box-shadow:inset 0 0 0 1px #0002;position:relative;${styleExtra}">${valText}${badge}</div>`;
       }
     }
   grid.innerHTML = html;
