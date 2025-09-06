@@ -1855,18 +1855,32 @@ function renderComparadorJugadores(metricasPorJugador) {
         const mitad = Math.ceil(partido.length / 2);
         const equipo1 = partido.slice(0, mitad);
         const equipo2 = partido.slice(mitad);
-        const golesEquipo1 = equipo1.reduce((acc, c) => acc + (Number(c[idxGoles]) || 0), 0);
-        const golesEquipo2 = equipo2.reduce((acc, c) => acc + (Number(c[idxGoles]) || 0), 0);
+        // Sumar goles propios
+        const golesEquipo1Propios = equipo1.reduce((acc, c) => acc + (Number(c[idxGoles]) || 0), 0);
+        const golesEquipo2Propios = equipo2.reduce((acc, c) => acc + (Number(c[idxGoles]) || 0), 0);
+        // Añadir autogoles (si existe columna)
+        const autogolesEq1 = idxAutogoles >= 0 ? equipo1.reduce((a, c) => a + (Number(c[idxAutogoles]) || 0), 0) : 0;
+        const autogolesEq2 = idxAutogoles >= 0 ? equipo2.reduce((a, c) => a + (Number(c[idxAutogoles]) || 0), 0) : 0;
+        // Los autogoles de un equipo se cuentan para el rival
+        const golesEquipo1 = golesEquipo1Propios + autogolesEq2;
+        const golesEquipo2 = golesEquipo2Propios + autogolesEq1;
         // Determinar si ambos jugadores quedaron en el mismo lado o distintos
         const estaJ1EnEquipo1 = equipo1.some(cols => (cols[idxJugador] || '').toLowerCase() === j1Lower);
         const estaJ2EnEquipo1 = equipo1.some(cols => (cols[idxJugador] || '').toLowerCase() === j2Lower);
         const mismoEquipoHeuristico = (estaJ1EnEquipo1 && estaJ2EnEquipo1) || (!estaJ1EnEquipo1 && !estaJ2EnEquipo1);
         const global = `${golesEquipo1} - ${golesEquipo2}`;
         if (mismoEquipoHeuristico) {
-          historial.push({ fecha, res1: 'Mismo equipo', res2: 'Mismo equipo', global, mismoEquipo: true, resultadoEquipo: golesEquipo1 === golesEquipo2 ? 'Empate' : (golesEquipo1 > golesEquipo2 ? 'Victoria' : 'Derrota'), empateMultiple: true });
+          const resultadoEquipo = golesEquipo1 === golesEquipo2 ? 'Empate' : (golesEquipo1 > golesEquipo2 ? 'Victoria' : 'Derrota');
+          historial.push({ fecha, res1: 'Mismo equipo', res2: 'Mismo equipo', global, mismoEquipo: true, resultadoEquipo, empateMultiple: true });
         } else {
-          // Rivales heurísticos: asignar resultado según igualdad de puntos (que sabemos es empate múltiple) => ambos 'Empate'
-          historial.push({ fecha, res1: 'Empate', res2: 'Empate', global, mismoEquipo: false, empateMultiple: true });
+          // Rivales heurísticos: si la suma de goles (incluyendo autogoles) permite determinar ganador, asignarlo; si no, marcar Empate
+          if (golesEquipo1 === golesEquipo2) {
+            historial.push({ fecha, res1: 'Empate', res2: 'Empate', global, mismoEquipo: false, empateMultiple: true });
+          } else if (golesEquipo1 > golesEquipo2) {
+            historial.push({ fecha, res1: 'Victoria', res2: 'Derrota', global, mismoEquipo: false, empateMultiple: true });
+          } else {
+            historial.push({ fecha, res1: 'Derrota', res2: 'Victoria', global, mismoEquipo: false, empateMultiple: true });
+          }
         }
       } else {
         // No es empate múltiple: lógica normal
@@ -1945,12 +1959,13 @@ function renderComparadorJugadores(metricasPorJugador) {
     }
     historial.sort((a, b) => parseFecha(a.fecha) - parseFecha(b.fecha));
 
-    // Calcular historial directo (solo partidos como rivales) excluyendo empates
-    let ganadosJ1 = 0, ganadosJ2 = 0;
+    // Calcular historial directo (solo partidos como rivales) — contamos victorias y empates entre rivales
+    let ganadosJ1 = 0, ganadosJ2 = 0, empatesRivales = 0;
     historial.forEach(e => {
       if (!e.mismoEquipo) {
         if (e.res1 === 'Victoria') ganadosJ1++;
         else if (e.res2 === 'Victoria') ganadosJ2++;
+        else if (e.res1 === 'Empate' && e.res2 === 'Empate') empatesRivales++;
       }
     });
 
@@ -1969,8 +1984,8 @@ function renderComparadorJugadores(metricasPorJugador) {
     }
 
     // Renderizar tabla
-    // Filtrar empates entre rivales para no mostrarlos en la tabla
-    const historialFiltrado = historial.filter(e => !( !e.mismoEquipo && e.res1 === 'Empate' && e.res2 === 'Empate'));
+    // Mostrar todo el historial (incluyendo empates entre rivales)
+    const historialFiltrado = historial;
     let html = '';
     if (historialFiltrado.length === 0) {
       html = `<div style=\"text-align:center;color:#ffd700;font-weight:600;\">No hay partidos con ganador entre estos jugadores.</div>`;
