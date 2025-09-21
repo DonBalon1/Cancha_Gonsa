@@ -6,6 +6,25 @@
   align-items: flex-start;
   flex-wrap: wrap;
 }
+/* Avatar image utility: garantiza forma circular y evita distorsiones */
+.avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block; /* evitar baseline/line-height issues */
+  flex: 0 0 auto; /* no permitir que se encoja en flex containers */
+  box-shadow: 0 1px 4px #0002;
+  border: 2px solid #222;
+}
+/* Valor principal del récord (número) con mayor protagonismo */
+.record-value {
+  font-size: 1.12em;
+  font-weight: 800;
+  color: var(--color-secundario);
+  margin-right: 6px;
+  display: inline-block;
+}
 /* --- Autogoles: icono y badge --- */
 /* Autogol: icono circular rojo semitransparente, sin texto interno */
 .icono-autogol {
@@ -14,7 +33,7 @@
   height:14px;
   border-radius:50%;
   background:radial-gradient(circle at 40% 40%, #ff8a80 0%, #ff5252 55%, #c62828 100%);
-  box-shadow:0 0 3px #ff525255, 0 0 0 1px #ffffff22 inset;
+  box-shadow:0 0 3px #f71a1a84, 0 0 0 1px #ffffff22 inset;
   margin-left:2px;
   position:relative;
   top:1px; /* leve ajuste vertical para alinear con ⚽ */
@@ -254,6 +273,27 @@
   transition: background 0.18s, box-shadow 0.18s, color 0.18s, border-color 0.18s;
 }
 
+/* Submenú de Récords (estética igual a Dashboard) */
+#recordsTabs .records-tab-btn,
+#recordsTabs .records-tab-btn {
+  padding: 0.5em 1.5em;
+  font-size: 1.08em;
+  font-weight: 600;
+  background: #23263a; /* inactivo */
+  color: #ffd700;
+  border: 1.5px solid #ffd700;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px #ffd70022;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s, border-color 0.18s;
+}
+#recordsTabs .records-tab-btn:hover:not(.active) { background:#2b2f47; box-shadow:0 2px 12px #ffd70033; }
+#recordsTabs .records-tab-btn.active { background: linear-gradient(90deg,#ffd700 0%,#ffe066 100%); color:#23263a; border:none; box-shadow:0 2px 12px #ffd70033; }
+
+/* Contenedores de records */
+#recordsHistoricos, #recordsPorTemporada { padding-top: 0.4em; }
+#recordsTemporadaContainer .record-row { margin-top: 0.6em; }
+
 #dashboardJugadorTabs .dashboard-tab-btn:hover:not(.active),
 #comparadorTabs .comparador-tab-btn:hover:not(.active),
 #historialTabs .historial-tab-btn:hover:not(.active) {
@@ -398,11 +438,206 @@
 }
 #grafico-desempeno {
   width: 100vw;
-  min-width: 100vw;
-  overflow-x: auto;
-  padding-bottom: 1.5em;
-  padding-left: 6em;
 }
+
+/* dropdown styles removed to revert selector to default appearance */
+
+/* ------------------ Dropdown global de AÑO (selectorAnio) ------------------ */
+.cg-dropdown-wrapper {
+  display: inline-block;
+  position: relative;
+  margin-left: 0.6em;
+  vertical-align: middle;
+  font-family: inherit;
+}
+.cg-dropdown-toggle {
+  background: linear-gradient(90deg,#ffd700 0%,#ffe066 100%);
+  color: #23263a;
+  border: none;
+  padding: 0.45em 0.8em;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px #0008, 0 1px 8px #ffd70022;
+  min-width: 92px;
+  text-align: center;
+}
+.cg-dropdown-toggle[aria-expanded="true"] {
+  box-shadow: 0 4px 18px #000a, 0 2px 12px #ffd70033;
+}
+.cg-dropdown-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #23263a;
+  border: 1.5px solid #ffd70033;
+  border-radius: 10px;
+  padding: 0.4em;
+  box-shadow: 0 6px 30px #000a, 0 4px 14px #ffd70022;
+  z-index: 120;
+  min-width: 140px;
+  max-height: 220px;
+  overflow: auto;
+}
+.cg-dropdown-item {
+  padding: 0.45em 0.7em;
+  color: #ffd700;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 700;
+  margin: 0.18em 0;
+}
+.cg-dropdown-item:hover {
+  background: #2b2f47;
+  color: #fff;
+}
+.cg-dropdown-item.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Nota / helper removed - not displayed any more */
+
+
+/* ===== RECORDS: mejoras estéticas ===== */
+#recordsContainer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.2em 1rem;
+}
+.record-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  background: linear-gradient(180deg, rgba(16,18,22,0.9), rgba(10,11,14,0.95));
+  border: 1px solid rgba(255,215,0,0.06);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6), 0 1px 0 rgba(255,215,0,0.03) inset;
+  padding: 0.85em 1em;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+.record-row > div:first-child {
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+}
+.record-meta { display:flex; align-items:center; }
+.record-title {
+  font-weight:700;
+  color:#ffd700;
+  font-size:1.05em;
+  line-height:1.1;
+  max-width: 160px;
+  display:-webkit-box;
+  -webkit-line-clamp:2; /* limitar a 2 líneas visuales */
+  line-clamp: 2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space: normal;
+}
+.record-row img {
+  width: 46px !important;
+  height: 46px !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255,215,0,0.08) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+.record-row .player-tile {
+  display:flex;align-items:center;gap:0.6em;background:transparent;padding:0.35em 0.6em;border-radius:8px;border:1px solid rgba(0,0,0,0.3);
+}
+.record-players {
+  display:flex;
+  gap:0.4em; /* menor separación entre tiles para mantenerlos en una fila */
+  align-items:center;
+  flex-wrap:nowrap; /* forzar mantenerse en una sola línea */
+  overflow: hidden;
+  /* allow the players area to take available space and keep tiles left-aligned */
+  flex: 1 1 auto;
+  min-width: 0; /* allow shrinking inside flex parent */
+  justify-content: flex-start; /* force left justification so few tiles don't center */
+}
+.record-players .player-tile {
+  min-width: 120px;
+  max-width: 220px;
+  flex: 1 1 140px; /* permitir shrink cuando el contenedor sea pequeño */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Minimal, sutil y moderno: colorear la tarjeta según la posición (sin mostrar número) */
+.player-tile.place-1 {
+  background: linear-gradient(180deg, rgba(255,215,0,0.06), rgba(255,215,0,0.03));
+  border-color: rgba(255,215,0,0.18);
+  box-shadow: 0 6px 18px rgba(255, 217, 0, 0.323) inset, 0 6px 20px rgba(0,0,0,0.45);
+}
+.player-tile.place-2 {
+  background: linear-gradient(180deg, rgba(192,192,192,0.04), rgba(192,192,192,0.02));
+  border-color: rgba(192,192,192,0.12);
+  box-shadow: 0 6px 18px rgba(192, 192, 192, 0.367) inset, 0 6px 20px rgba(0,0,0,0.45);
+}
+.player-tile.place-3 {
+  background: linear-gradient(180deg, rgba(205,127,50,0.04), rgba(205,127,50,0.02));
+  border-color: rgba(205,127,50,0.12);
+  box-shadow: 0 6px 18px rgba(205, 128, 50, 0.3) inset, 0 6px 20px rgba(0,0,0,0.45);
+}
+
+/* Ajuste: avatar y texto mantienen contraste y tamaño en tarjetas coloreadas */
+.player-tile.place-1 img,
+.player-tile.place-2 img,
+.player-tile.place-3 img { border-color: rgba(255,255,255,0.06); }
+.record-row .player-tile .nombre { font-weight:700;color:#fff; }
+.record-row .player-tile .meta { color:#9ea5ad;font-size:0.85em }
+.btn-record-detalle {
+  background: linear-gradient(180deg,#23263a 0%, #16171b 100%);
+  color: #ffd700;
+  border: 1px solid #333;
+  padding: 0.45em 0.7em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-record-detalle:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+
+/* Modal content tweaks */
+#recordModalContent { box-shadow: 0 12px 40px rgba(0,0,0,0.7); border-radius: 12px !important; }
+#recordModalContent h2 { color: #ffd700 !important; margin:0 0 6px 0; }
+
+/* Blur background when modal is active */
+.modal-blur > *:not(#recordModal) {
+  filter: blur(6px) brightness(0.92);
+  transition: filter 0.26s cubic-bezier(.2,.9,.2,1), transform 0.26s cubic-bezier(.2,.9,.2,1);
+  pointer-events: none; /* evitar interacción con elementos del fondo */
+}
+#recordModal {
+  position: fixed; /* asegurar que el modal renderice por encima del blur */
+  z-index: 9999;
+}
+
+/* Modal content animation */
+#recordModalContent.modal-open {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition: transform 0.26s cubic-bezier(.2,.9,.2,1), opacity 0.22s ease;
+}
+#recordModalContent.modal-close {
+  transform: translateY(6px) scale(0.995);
+  opacity: 0;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+}
+#recordModalContent { transform-origin: center; }
+
+/* Modal wrapper visible state (for backdrop fade) */
+#recordModal { opacity: 0; transition: opacity 0.22s ease; }
+#recordModal.show { opacity: 1; }
+
+@media (max-width: 900px) {
+  .record-row { flex-direction: column; align-items: stretch; }
+  .record-row > div:first-child { width: 100%; }
+  .btn-record-detalle { align-self: flex-end; }
+}
+
 
 #grafico-desempeno canvas {
   display: block;
@@ -2171,6 +2406,41 @@ td.resaltado-secundario {
 .dot-yellow { background: #ffd700; }
 .dot-blue { background: #4fc3f7; }
 .dot-gray { background: #b0b0b0; }
+/* Punto para jugador ausente: gris oscuro */
+.dot-absent { background: #3f444a; }
+
+/* Texto pequeño que acompaña al punto de ausente ("Aus") */
+.absent-text {
+  font-size: 0.75em;
+  color: #9ea5ad;
+  font-weight: 700;
+  display: block;
+  margin-top: 0.18em;
+  line-height: 1;
+  text-align: center;
+}
+
+/* Contenedor vertical para punto + texto debajo */
+.absent-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12em;
+}
+
+/* Texto pequeño que muestra el resultado debajo del punto: G/E/P */
+.result-text {
+  font-size: 0.75em;
+  font-weight: 800;
+  display: block;
+  margin-top: 0.12em;
+  line-height: 1;
+  text-align: center;
+}
+.result-text.g { color: #2e7d32; } /* verde oscuro */
+.result-text.e { color: #b59f00; } /* amarillo / ocre */
+.result-text.p { color: #c62828; } /* rojo oscuro */
 
 .dot-num {
   font-size: 0.85em;

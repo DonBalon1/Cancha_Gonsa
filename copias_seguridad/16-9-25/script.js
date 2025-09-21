@@ -107,42 +107,17 @@ function renderRegistroLogros() {
       return valor >= medalla.min && valor <= medalla.max;
     });
     const color = coloresMedalla[medalla.nombre] || {bg:'#23263a',border:'#ffd700',text:'#ffd700'};
-    // Unidad para textos dinámicos
-    const unidad = filtro === 'goles' ? 'goles' : (filtro === 'partidos' ? 'partidos' : 'victorias');
     html += `<div style="background:#23263a;border-radius:12px;box-shadow:0 2px 12px ${color.border}55;padding:1em 1.2em;margin-bottom:1.2em;border:2.5px solid ${color.border};">
       <div style="font-size:1.35em;font-weight:900;letter-spacing:0.04em;margin-bottom:0.5em;text-shadow:0 2px 12px ${color.border}99,0 1px 8px #0003;color:${color.border};filter:brightness(1.15);">
         ${medalla.nombre}
       </div>
       <div style="color:#ffd700b0;font-size:1em;margin-bottom:0.5em;display:flex;flex-wrap:wrap;gap:1em;align-items:center;">
-        ${jugadores.length ? jugadores.map(j => {
-          const valor = j[filtro];
-          // Determinar nivel actual y siguiente para progreso
-          const niveles = config; // contiene min y max
-          let idxNivel = niveles.findIndex(n => valor >= n.min && valor <= n.max);
-          if (idxNivel === -1) idxNivel = 0;
-          const nivelActual = niveles[idxNivel];
-          const nivelSiguiente = niveles[idxNivel + 1] || null;
-          const faltan = nivelSiguiente ? (nivelSiguiente.min - valor) : 0;
-          let progresoPct = 1;
-          if (nivelSiguiente) {
-            progresoPct = (valor - nivelActual.min) / (nivelSiguiente.min - nivelActual.min);
-            if (progresoPct < 0) progresoPct = 0; if (progresoPct > 1) progresoPct = 1;
-          }
-          const progresoPctTxt = Math.round(progresoPct * 100);
-          const tooltipHtml = `\n${valor} ${unidad} totales\nNivel actual: ${nivelActual.nombre}${nivelSiguiente ? `\nFaltan ${faltan} para ${nivelSiguiente.nombre}` : '\nNivel máximo alcanzado'}\nProgreso: ${progresoPctTxt}%`;
-          return `
-          <span class="registro-jugador-medalla-item" style="position:relative;display:flex;align-items:center;gap:0.5em;background:#23263a99;padding:0.25em 0.7em;border-radius:8px;box-shadow:0 2px 8px ${color.border}22;">
+        ${jugadores.length ? jugadores.map(j => `
+          <span style="display:flex;align-items:center;gap:0.5em;background:#23263a99;padding:0.25em 0.7em;border-radius:8px;box-shadow:0 2px 8px ${color.border}22;">
             <img src="${j.img}" alt="${j.nombre}" onerror="this.onerror=null;this.src='img/jugadores/jugador-vacio.png';" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${color.border};box-shadow:0 1px 6px ${color.border}33;">
             <span style="color:${color.border};font-weight:600;">${j.nombre}</span>
-            <div class="registro-jugador-tooltip">
-              <div class="registro-jugador-tooltip-line nombre">${j.nombre}</div>
-              <div class="registro-jugador-tooltip-line valor"><b>${valor}</b> ${unidad}</div>
-              <div class="registro-jugador-tooltip-line nivel">Nivel: <b>${nivelActual.nombre}</b></div>
-              ${nivelSiguiente ? `<div class=\"registro-jugador-tooltip-line faltan\">Faltan <b>${faltan}</b> para <b>${nivelSiguiente.nombre}</b></div>` : `<div class=\"registro-jugador-tooltip-line max\">Nivel máximo</div>`}
-              <div class="registro-jugador-tooltip-line progreso"><div class="registro-jugador-progreso-bar"><span style="width:${progresoPct*100}%"></span></div><span class="registro-jugador-progreso-text">${progresoPctTxt}%</span></div>
-            </div>
-          </span>`;
-        }).join('') : `<span style=\"color:#ffd70055\">Ningún jugador</span>`}
+          </span>
+        `).join('') : `<span style=\"color:#ffd70055\">Ningún jugador</span>`}
       </div>
     </div>`;
   });
@@ -298,28 +273,303 @@ function renderSelectorAnio(anios) {
     cont.style.marginBottom = '1em';
     const parent = document.querySelector('#tab-general');
     if (parent) parent.prepend(cont);
+    else document.body.insertBefore(cont, document.body.firstChild);
   }
-  cont.innerHTML = `<label for="selectorAnio"><b>Año:</b></label> <select id="selectorAnio"></select>`;
-  const sel = cont.querySelector('#selectorAnio');
-  sel.innerHTML = '';
-  // Agregar opción Histórico al principio
-  const optHist = document.createElement('option');
-  optHist.value = 'Histórico';
-  optHist.textContent = 'Histórico';
-  sel.appendChild(optHist);
-  anios.forEach(anio => {
-    const opt = document.createElement('option');
-    opt.value = anio;
-    opt.textContent = anio;
-    sel.appendChild(opt);
-  });
-  // Seleccionar el año actual o Histórico si estaba seleccionado
-  sel.value = anioSeleccionado || anios[0];
-  sel.onchange = function() {
-    anioSeleccionado = this.value;
-    try { localStorage.setItem('anioSeleccionado', anioSeleccionado); } catch(_) {}
-    filtrarYRenderizarPorAnio();
+  // Limpia el contenedor
+  cont.innerHTML = '';
+
+  const label = document.createElement('label');
+  label.htmlFor = 'selectorAnioToggle';
+  label.innerHTML = '<b>Año:</b>';
+  cont.appendChild(label);
+
+  // Storage key
+  const STORAGE_KEY = 'cancha_gonsa_selectedYear_v1';
+
+  // Wrapper del dropdown custom
+  const wrapper = document.createElement('div');
+  wrapper.className = 'cg-dropdown-wrapper';
+  // keep structure, remove presentation styles
+  wrapper.style.position = '';
+  wrapper.style.display = '';
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.id = 'selectorAnioToggle';
+  toggle.className = 'cg-dropdown-toggle';
+  toggle.setAttribute('aria-haspopup', 'listbox');
+  toggle.setAttribute('aria-expanded', 'false');
+  // remove visual inline styles to revert to default/native styles
+  toggle.style.cursor = '';
+  toggle.style.minWidth = '';
+  toggle.style.textAlign = '';
+  toggle.style.padding = '';
+  toggle.style.borderRadius = '';
+  toggle.style.border = '';
+  toggle.style.background = '';
+  toggle.style.color = '';
+  toggle.style.fontWeight = '';
+  wrapper.appendChild(toggle);
+
+  const list = document.createElement('div');
+  list.id = 'selectorAnioList';
+  list.className = 'cg-dropdown-list';
+  list.setAttribute('role', 'listbox');
+  // remove visual inline styles from list
+  list.style.position = '';
+  list.style.top = '';
+  list.style.left = '';
+  list.style.minWidth = '';
+  list.style.background = '';
+  list.style.border = '';
+  list.style.borderRadius = '';
+  list.style.boxShadow = '';
+  list.style.padding = '';
+  list.style.zIndex = '';
+  list.style.display = 'none'; // keep display control for open/close behavior
+  list.style.maxHeight = '';
+  list.style.overflow = '';
+  wrapper.appendChild(list);
+
+  // Build items
+  const makeItem = (value) => {
+    const it = document.createElement('div');
+    it.className = 'cg-dropdown-item';
+    it.setAttribute('role', 'option');
+    it.dataset.value = value;
+  // remove presentation styles for items
+  it.style.padding = '';
+  it.style.cursor = '';
+  it.style.borderRadius = '';
+  it.style.color = '';
+  it.style.userSelect = '';
+    it.textContent = value;
+    return it;
   };
+
+  // Hist
+  list.appendChild(makeItem('Histórico'));
+  anios.forEach(a => list.appendChild(makeItem(String(a))));
+
+  cont.appendChild(wrapper);
+  
+  // Restore value
+  const stored = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch(_) { return null; } })();
+  if (stored && (stored === 'Histórico' || anios.indexOf(stored) >= 0)) anioSeleccionado = stored;
+  else anioSeleccionado = anios.length ? String(anios[anios.length - 1]) : 'Histórico';
+  // Preferir el último año en tabs específicas (general, goleadores, presencias)
+  try {
+    const activeKey = getActiveMainTabKey();
+    const reglaActual = (typeof reglas !== 'undefined' && reglas[activeKey]) ? reglas[activeKey] : null;
+    const preferLatestTabs = ['general', 'goleadores', 'presencias'];
+    if (reglaActual && reglaActual.years && anios.length) {
+      // Si no hay valor almacenado o si el usuario tenía 'Histórico' y estamos en una de las pestañas objetivo,
+      // forzar por defecto el último año disponible. No sobrescribimos una selección explícita distinta de 'Histórico'.
+      if (!stored || (stored === 'Histórico' && preferLatestTabs.indexOf(activeKey) >= 0)) {
+        anioSeleccionado = String(anios[anios.length - 1]);
+      }
+    }
+  } catch (_) {}
+  // update toggle label
+  const updateToggleLabel = () => { toggle.textContent = anioSeleccionado; };
+  updateToggleLabel();
+
+  // Aplicar reglas de disponibilidad en cuanto el selector se renderiza
+  try { if (typeof updateSelectorAnioAvailability === 'function') updateSelectorAnioAvailability(); else if (typeof updateSelectorAvailability === 'function') updateSelectorAvailability(); } catch(_) {}
+
+  // selection handler
+  const selectValue = (v) => {
+    if (!v) return;
+    anioSeleccionado = v;
+    try { localStorage.setItem(STORAGE_KEY, anioSeleccionado); } catch(_) {}
+    updateToggleLabel();
+    try { filtrarYRenderizarPorAnio(); } catch(e) { console.warn('filtrarYRenderizarPorAnio', e); }
+  };
+
+  // Open/close
+  const openList = () => { list.style.display = 'block'; toggle.setAttribute('aria-expanded','true'); document.body.style.userSelect = 'none'; };
+  const closeList = () => { list.style.display = 'none'; toggle.setAttribute('aria-expanded','false'); document.body.style.userSelect = ''; };
+
+  toggle.addEventListener('click', (e) => { e.stopPropagation(); if (list.style.display==='block') closeList(); else openList(); });
+
+  // Click outside closes
+  document.addEventListener('click', (e) => { if (!wrapper.contains(e.target)) closeList(); }, true);
+
+  // Keyboard navigation
+  let focusIndex = -1;
+  const items = () => Array.from(list.querySelectorAll('.cg-dropdown-item'));
+  toggle.addEventListener('keydown', (e) => {
+    const its = items();
+    if (e.key === 'ArrowDown') { e.preventDefault(); openList(); focusIndex = Math.min(its.length-1, Math.max(0, focusIndex+1)); its[focusIndex].focus(); its[focusIndex].scrollIntoView({block:'nearest'}); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); openList(); focusIndex = Math.max(0, focusIndex-1); its[focusIndex].focus(); its[focusIndex].scrollIntoView({block:'nearest'}); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (list.style.display==='block' && focusIndex>=0) { const v=its[focusIndex].dataset.value; if (!its[focusIndex].classList.contains('disabled')) selectValue(v); closeList(); } else openList(); }
+    else if (e.key === 'Escape') { closeList(); }
+  });
+
+  // Item interactions
+  list.addEventListener('click', (ev) => {
+    const it = ev.target.closest('.cg-dropdown-item');
+    if (!it || it.classList.contains('disabled')) return;
+    selectValue(it.dataset.value);
+    closeList();
+  });
+  list.addEventListener('mouseover', (ev) => {
+    const it = ev.target.closest('.cg-dropdown-item');
+    if (!it) return;
+    items().forEach(i=>i.classList.remove('hover'));
+    it.classList.add('hover');
+  });
+
+  // Styling injected (override earlier small style) - same id to avoid duplicates
+  // Remove injected helper styles to restore default/native appearance
+  try {
+    const existing = document.getElementById('selectorAnioHelperStyles');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+  } catch (_) {}
+
+  // Rules and availability update (reused logic adapted to custom items)
+  function getActiveMainTabKey() {
+    const checks = [
+      { id: 'tablaPuntosTotales', key: 'general' },
+      { id: 'tablaGoleadores', key: 'goleadores' },
+      { id: 'tablaTribunalAsistencias', key: 'presencias' },
+      { id: 'historialCalendarioContainer', key: 'historial' },
+      { id: 'comparadorEstadisticas', key: 'comparador' },
+      { id: 'grafico-desempeno', key: 'desempeño' },
+      { id: 'tab-dashboard-jugador', key: 'desempeño' },
+      { id: 'dashboardJugadorTabEstadisticas', key: 'desempeño' },
+      { id: 'recordsContainer', key: 'records' }
+    ];
+    for (const c of checks) {
+      const el = document.getElementById(c.id);
+      if (el) {
+        try { const style = window.getComputedStyle(el); if (style && style.display !== 'none' && el.offsetParent !== null) return c.key; } catch(_){}
+      }
+    }
+    const activeBtn = document.querySelector('.tab-btn.active, .navbar-links a.tab-btn.active');
+    if (activeBtn) {
+      const dt = (activeBtn.dataset && activeBtn.dataset.tab) ? activeBtn.dataset.tab : (activeBtn.getAttribute('href') || activeBtn.getAttribute('data-tab') || '');
+      const s = String(dt).toLowerCase();
+      if (s.includes('goleador')) return 'goleadores';
+      if (s.includes('presenc') || s.includes('asistenc')) return 'presencias';
+      if (s.includes('historial') || s.includes('partidos')) return 'historial';
+      if (s.includes('comparador')) return 'comparador';
+      if (s.includes('desempeno') || s.includes('correlacion')) return 'desempeño';
+      if (s.includes('records')) return 'records';
+      if (s.includes('general')) return 'general';
+    }
+    const h = (location.hash || '').toLowerCase();
+    if (h.includes('goleador')) return 'goleadores';
+    if (h.includes('presenc') || h.includes('asistenc')) return 'presencias';
+    if (h.includes('historial')) return 'historial';
+    if (h.includes('comparador')) return 'comparador';
+    if (h.includes('desempeno') || h.includes('correlacion')) return 'desempeño';
+    if (h.includes('records')) return 'records';
+    return 'general';
+  }
+
+  const reglas = {
+    general:      { years: true,  historico: true },
+    goleadores:   { years: true,  historico: true },
+    presencias:   { years: true,  historico: false },
+    historial:    { years: true,  historico: false },
+    comparador:   { years: true,  historico: true },
+    desempeño:    { years: false, historico: true },
+    records:      { years: false, historico: true }
+  };
+  function updateSelectorAvailability() {
+    const rule = reglas[getActiveMainTabKey()] || { years:true, historico:true };
+    // Si estamos en una de las pestañas que deben mostrar por defecto el último año,
+    // y la selección actual es 'Histórico' o vacía, actualizar visualmente a último año
+    try {
+      const preferLatestTabs = ['general', 'goleadores', 'presencias'];
+      const activeKeyNow = getActiveMainTabKey();
+      if (preferLatestTabs.indexOf(activeKeyNow) >= 0 && anios.length) {
+        if (!anioSeleccionado || anioSeleccionado === 'Histórico') {
+          // No persistimos este cambio en localStorage: es un default visual para estas pestañas
+          anioSeleccionado = String(anios[anios.length - 1]);
+          try { updateToggleLabel(); } catch(_) {}
+          try { filtrarYRenderizarPorAnio(); } catch(_) {}
+        }
+      }
+    } catch(_) {}
+    // Prefer native select when present
+    const select = document.getElementById('selectorAnioSelect');
+    if (select) {
+      Array.from(select.options).forEach(opt => {
+        if (opt.value === 'Histórico') {
+          opt.disabled = !rule.historico;
+          opt.text = !rule.historico ? `🔒 Histórico` : 'Histórico';
+        } else {
+          opt.disabled = !rule.years;
+          opt.text = !rule.years ? `🔒 ${opt.value}` : opt.value;
+        }
+      });
+      // fallback: if current selection disabled, pick a valid one
+      const curOpt = Array.from(select.options).find(o => o.value === String(anioSeleccionado));
+      if (curOpt && curOpt.disabled) {
+        if (rule.years) {
+          const last = Array.from(select.options).reverse().find(o => !o.disabled && o.value !== 'Histórico');
+          if (last) select.value = last.value;
+        } else if (rule.historico) {
+          select.value = 'Histórico';
+        } else {
+          const last = Array.from(select.options).reverse().find(o => !o.disabled && o.value !== 'Histórico');
+          if (last) select.value = last.value;
+        }
+        anioSeleccionado = select.value;
+        try { filtrarYRenderizarPorAnio(); } catch(_) {}
+      }
+      return;
+    }
+
+    // Fallback to legacy custom items if any
+    const its = Array.from(document.querySelectorAll('.cg-dropdown-item'));
+    its.forEach(it => {
+      const v = it.dataset && it.dataset.value ? it.dataset.value : it.textContent;
+      if (v === 'Histórico') {
+        if (!rule.historico) { it.classList.add('disabled'); it.setAttribute('aria-disabled','true'); it.textContent = `🔒 Histórico`; }
+        else { it.classList.remove('disabled'); it.removeAttribute('aria-disabled'); it.textContent = 'Histórico'; }
+      } else {
+        if (!rule.years) { it.classList.add('disabled'); it.setAttribute('aria-disabled','true'); it.textContent = `🔒 ${v}`; }
+        else { it.classList.remove('disabled'); it.removeAttribute('aria-disabled'); it.textContent = v; }
+      }
+      // mark selected
+      if (v === String(anioSeleccionado)) { it.classList.add('selected'); it.setAttribute('aria-selected','true'); } else { it.classList.remove('selected'); it.setAttribute('aria-selected','false'); }
+    });
+    // fallback if selection disabled
+    const curIt = its.find(i => (i.dataset && i.dataset.value ? i.dataset.value : i.textContent) === String(anioSeleccionado));
+    if (curIt && curIt.classList.contains('disabled')) {
+      if (rule.years) {
+        const last = its.slice().reverse().find(i => !i.classList.contains('disabled') && ((i.dataset && i.dataset.value) ? i.dataset.value !== 'Histórico' : true));
+        if (last) {
+          const v = last.dataset && last.dataset.value ? last.dataset.value : last.textContent;
+          if (typeof select !== 'undefined' && select) { select.value = v; anioSeleccionado = v; try { filtrarYRenderizarPorAnio(); } catch(_) {} }
+          else if (typeof selectValue === 'function') selectValue(v);
+        }
+      } else if (rule.historico) {
+        if (typeof select !== 'undefined' && select) { select.value = 'Histórico'; anioSeleccionado = 'Histórico'; try { filtrarYRenderizarPorAnio(); } catch(_) {} }
+        else if (typeof selectValue === 'function') selectValue('Histórico');
+      } else {
+        const last = its.slice().reverse().find(i => !i.classList.contains('disabled') && ((i.dataset && i.dataset.value) ? i.dataset.value !== 'Histórico' : true));
+        if (last) {
+          const v = last.dataset && last.dataset.value ? last.dataset.value : last.textContent;
+          if (typeof select !== 'undefined' && select) { select.value = v; anioSeleccionado = v; try { filtrarYRenderizarPorAnio(); } catch(_) {} }
+          else if (typeof selectValue === 'function') selectValue(v);
+        }
+      }
+    }
+  }
+
+  // attach delegated update triggers
+  document.addEventListener('click', (e) => { const maybeTab = e.target.closest('.tab-btn, [data-tab], a[href^="#"], .navbar-links a'); if (maybeTab) setTimeout(updateSelectorAvailability, 60); }, true);
+  window.addEventListener('hashchange', () => setTimeout(updateSelectorAvailability, 40));
+
+  // expose updater
+  window.updateSelectorAnioAvailability = updateSelectorAvailability;
+
+  // initial availability run
+  updateSelectorAvailability();
 }
 
 function filtrarYRenderizarPorAnio() {
@@ -440,6 +690,24 @@ function filtrarYRenderizarPorAnio() {
   try { renderHistorialCalendario(dataFiltrada, window.idxFecha); } catch(e) { console.warn('Calendario no disponible aún', e); }
   renderComparadorJugadores(window.metricasPorJugador);
   renderDashboardJugador(window.metricasPorJugador);
+  // Actualizar Récords cuando cambie el año/filtrado
+  if (typeof window.renderRecords === 'function') {
+    try { window.renderRecords(); } catch(_) {}
+  }
+  // Si la pestaña de Correlación está visible, refrescarla también
+  try {
+    const tabCorr = document.getElementById('comparadorTabCorrelacion');
+    if (tabCorr && tabCorr.style.display !== 'none' && typeof window.renderCorrelacionChart === 'function') {
+      try { window.renderCorrelacionChart(); } catch(e) { console.warn('Error refrescando correlación', e); }
+    }
+  } catch(e) { /* no bloquear por errores menores */ }
+  // Si la pestaña de Sinergias (Cara a Cara) está visible, refrescarla también
+  try {
+    const tabSin = document.getElementById('comparadorTabSinergias');
+    if (tabSin && tabSin.style.display !== 'none' && typeof window.renderSinergias === 'function') {
+      try { window.renderSinergias(); } catch(e) { console.warn('Error refrescando sinergias (cara a cara)', e); }
+    }
+  } catch(e) { /* no bloquear por errores menores */ }
 }
 
 // Modificar el fetch principal para detectar años y renderizar el selector
@@ -462,8 +730,9 @@ fetchCSVWithCache(csvUrl, 'cancha_gonsa_csv_v1', 5 * 60 * 1000)
       aniosSet.add(year);
     });
     aniosDisponibles = Array.from(aniosSet).sort();
-    // Intentar restaurar selección previa
-    const storedAnio = (() => { try { return localStorage.getItem('anioSeleccionado'); } catch(_) { return null; } })();
+    // Intentar restaurar selección previa (usar STORAGE_KEY consistente)
+    const STORAGE_KEY = 'cancha_gonsa_selectedYear_v1';
+    const storedAnio = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch(_) { return null; } })();
     if (storedAnio && aniosDisponibles.includes(storedAnio)) {
       anioSeleccionado = storedAnio;
     } else {
@@ -477,6 +746,7 @@ fetchCSVWithCache(csvUrl, 'cancha_gonsa_csv_v1', 5 * 60 * 1000)
   const variantesAutogoles = ['autogoles','autogol','en contra','contra','goles en contra','gol en contra','og'];
   window.idxAutogoles = headers.findIndex(h => variantesAutogoles.includes(h.trim().toLowerCase()));
     renderSelectorAnio(aniosDisponibles);
+    // helper note injection removed (visual hint not required)
     filtrarYRenderizarPorAnio();
   });
 
@@ -1057,6 +1327,8 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   const tablaDiv = document.getElementById('tablaTribunalAsistencias');
   if (!tablaDiv) return;
 
+  // Nota: Ya no se fuerza 'Histórico' a mostrar sólo el último año — ahora 'Histórico' incluye todo el historial en esta pestaña.
+
   // --- Contenedor superior (para filtro) ---
   let contenedorSuperior = document.getElementById('contenedorSuperiorPresencias');
   if (!contenedorSuperior) {
@@ -1192,9 +1464,31 @@ function renderTribunalAsistencias(dataRows, idxJugador, idxFecha) {
   html += `<td class="${clasePorcentaje(porcentajeNum)}">${asistencias} de ${total} <span style='opacity:.75;font-weight:600;'>(${porcentajeStr})</span></td>`;
     fechas.forEach(fecha => {
       if (presenciasPorJugador[jugador].has(fecha)) {
-        html += '<td style="text-align:center;">🟢</td>';
+        // Encontrar la fila correspondiente a este jugador y fecha para obtener puntos
+        const fila = dataRows.find(cols => {
+          return cols[idxFecha] === fecha && cols[idxJugador] === jugador;
+        });
+        let puntosVal = null;
+        if (fila) {
+          puntosVal = Number(fila[idxPuntos]);
+          if (Number.isNaN(puntosVal)) puntosVal = null;
+        }
+        // Colorear según puntos: 3=verde (victoria), 1=amarillo (empate), 0=rojo (derrota)
+        let dotClass = 'dot-green';
+        let title = 'Presente - Resultado: Victoria';
+        let resultLetter = 'G';
+        let resultClass = 'g';
+        if (puntosVal === 1) { dotClass = 'dot-yellow'; title = 'Presente - Resultado: Empate'; resultLetter = 'E'; resultClass = 'e'; }
+        else if (puntosVal === 0) { dotClass = 'dot-red'; title = 'Presente - Resultado: Derrota'; resultLetter = 'P'; resultClass = 'p'; }
+        else if (puntosVal === null) { dotClass = 'dot-green'; title = 'Presente'; resultLetter = ''; resultClass = ''; }
+        if (resultLetter) {
+          html += `<td style="text-align:center;"><span class=\"absent-cell\"><span class=\"dot ${dotClass}\" title=\"${title}\"></span><span class=\"result-text ${resultClass}\">${resultLetter}</span></span></td>`;
+        } else {
+          html += `<td style="text-align:center;"><span class=\"dot ${dotClass}\" title=\"${title}\"></span></td>`;
+        }
       } else {
-        html += '<td style="text-align:center;">🔴</td>';
+        // Ausente: punto gris oscuro + texto "Aus" debajo
+        html += `<td style="text-align:center;"><span class=\"absent-cell\"><span class=\"dot dot-absent\" title=\"Ausente\"></span><span class=\"absent-text\">Aus</span></span></td>`;
       }
     });
     html += '</tr>';
@@ -3911,3 +4205,672 @@ window.renderSinergias = function() {
   }
   dibujar();
 }
+
+// Placeholder renderer for Récords tab
+// Renderizador de la pestaña "Récords"
+window.renderRecords = function(year, mode) {
+  const container = document.getElementById('recordsContainer');
+  if (!container) return;
+  // Todas las filas originales
+  const allRows = window.dataRowsOriginal || [];
+  // Filas a usar: si year está definido y no es 'Histórico', filtrar por año
+  const rows = (typeof year !== 'undefined' && year !== null && String(year) !== '' && String(year).toLowerCase() !== 'histórico')
+    ? allRows.filter(cols => {
+        const fecha = cols[window.idxFecha];
+        if (!fecha) return false;
+        let y = '';
+        if (String(fecha).includes('-')) y = String(fecha).split('-')[0];
+        else if (String(fecha).includes('/')) y = String(fecha).split('/').pop();
+        else y = String(fecha).substring(0,4);
+        return String(y) === String(year);
+      })
+    : allRows;
+  // Build historical metrics from allRows (goles, partidos, ganados, autogoles)
+  function buildMetricas(rows) {
+    const m = {};
+    const idxG = typeof window.idxGoles === 'number' ? window.idxGoles : -1;
+    const idxA = typeof window.idxAutogoles === 'number' ? window.idxAutogoles : -1;
+    const idxP = typeof window.idxPuntos === 'number' ? window.idxPuntos : -1;
+    const idxJ = window.idxJugador;
+    rows.forEach(cols => {
+      const jugador = cols[idxJ];
+      if (!jugador) return;
+      if (!m[jugador]) m[jugador] = {puntos:0,goles:0,autogoles:0,golesNetos:0,partidos:0,ganados:0,empatados:0,perdidos:0,difGol:0};
+      const puntos = idxP >= 0 ? Number(cols[idxP]) : NaN;
+      let goles = idxG >= 0 ? Number(cols[idxG]) : 0; if (isNaN(goles)) goles = 0;
+      let aut = idxA >= 0 ? Number(cols[idxA]) : 0; if (isNaN(aut)) aut = 0;
+      m[jugador].partidos += 1;
+      m[jugador].goles += goles;
+      m[jugador].autogoles += aut;
+      m[jugador].golesNetos = m[jugador].goles - m[jugador].autogoles;
+      if (puntos === 3) m[jugador].ganados += 1;
+      else if (puntos === 1) m[jugador].empatados += 1;
+      else if (puntos === 0) m[jugador].perdidos += 1;
+      if (!isNaN(puntos)) m[jugador].puntos += puntos;
+    });
+    return m;
+  }
+  const metricasHistoric = buildMetricas(rows);
+  const idxJugador = window.idxJugador;
+  const idxGoles = typeof window.idxGoles === 'number' ? window.idxGoles : -1;
+  const idxAutogoles = typeof window.idxAutogoles === 'number' ? window.idxAutogoles : -1;
+  const idxPuntos = typeof window.idxPuntos === 'number' ? window.idxPuntos : -1;
+
+  // Helpers
+  function avatarFor(jugador) {
+    const norm = normalizarNombreArchivo(jugador);
+    const src = `img/jugadores/jugador-${norm}.png`;
+    // Uso de clase CSS .avatar-img para mantener consistencia y evitar distorsión
+    return `<img class="avatar-img" src="${src}" onerror="this.src='img/jugadores/jugador-vacio.png'" alt="${jugador}" style="margin-right:8px;">`;
+  }
+
+  // Parser robusto para varias formas de fecha presentes en el CSV (scope compartido)
+  function parseFechaToTime(s) {
+    if (!s && s !== 0) return NaN;
+    const str = String(s).trim();
+    if (!str) return NaN;
+    // Priorizar formatos explícitos para evitar ambigüedad (DD/MM/YYYY vs MM/DD/YYYY)
+    // 1) YYYY-MM-DD or YYYY/MM/DD
+    const mIso = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (mIso) {
+      const year = Number(mIso[1]);
+      const month = Number(mIso[2]) - 1;
+      const day = Number(mIso[3]);
+      return new Date(year, month, day).getTime();
+    }
+    // 2) DD-MM-YYYY or DD/MM/YYYY (o 2-digit year)
+    const mDmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (mDmy) {
+      let day = Number(mDmy[1]);
+      let month = Number(mDmy[2]) - 1;
+      let year = Number(mDmy[3]);
+      if (year < 100) {
+        year += (year < 70) ? 2000 : 1900;
+      }
+      return new Date(year, month, day).getTime();
+    }
+    // 3) Fallback a Date.parse (intenta varios formatos del motor)
+    const t0 = Date.parse(str);
+    if (!isNaN(t0)) return t0;
+    // 4) Reemplazo simple guiones->slashes y reintento
+    const try1 = Date.parse(str.replace(/-/g,'/'));
+    if (!isNaN(try1)) return try1;
+    return NaN;
+  }
+
+  // 1.5) Goles en Contra (histórico): calcular por jugador sumando los goles del rival en cada partido
+  const golesContraPorJugador = {};
+  try {
+    const partidosPorFecha = {};
+  rows.forEach(cols => {
+      const f = cols[window.idxFecha];
+      if (!partidosPorFecha[f]) partidosPorFecha[f] = [];
+      partidosPorFecha[f].push(cols);
+    });
+    Object.values(partidosPorFecha).forEach(partido => {
+      // agrupar por punto (equipos)
+      const grupos = {};
+      partido.forEach(cols => {
+        const k = String(cols[idxPuntos]);
+        if (!grupos[k]) grupos[k] = [];
+        grupos[k].push(cols);
+      });
+      const keys = Object.keys(grupos);
+      if (keys.length === 2) {
+        const gA = grupos[keys[0]];
+        const gB = grupos[keys[1]];
+        const golesA = gA.reduce((acc,c)=> acc + (isNaN(Number(c[idxGoles]))?0:Number(c[idxGoles])), 0);
+        const golesB = gB.reduce((acc,c)=> acc + (isNaN(Number(c[idxGoles]))?0:Number(c[idxGoles])), 0);
+        const autoA = (idxAutogoles>=0) ? gA.reduce((acc,c)=> acc + (isNaN(Number(c[idxAutogoles]))?0:Number(c[idxAutogoles])),0) : 0;
+        const autoB = (idxAutogoles>=0) ? gB.reduce((acc,c)=> acc + (isNaN(Number(c[idxAutogoles]))?0:Number(c[idxAutogoles])),0) : 0;
+        const marcadorA = golesA + autoB; // autogoles del rival cuentan para A
+        const marcadorB = golesB + autoA;
+        gA.forEach(cols => {
+          const jugador = cols[idxJugador];
+          if (!jugador) return;
+          if (!golesContraPorJugador[jugador]) golesContraPorJugador[jugador] = 0;
+          golesContraPorJugador[jugador] += marcadorB;
+        });
+        gB.forEach(cols => {
+          const jugador = cols[idxJugador];
+          if (!jugador) return;
+          if (!golesContraPorJugador[jugador]) golesContraPorJugador[jugador] = 0;
+          golesContraPorJugador[jugador] += marcadorA;
+        });
+      }
+    });
+  } catch(e) { console.warn('Error calculando golesContraPorJugador', e); }
+  const golesContraList = Object.entries(golesContraPorJugador).map(([j,v])=>({jugador:j,value:v,partidos:(metricasHistoric[j]&&metricasHistoric[j].partidos)||0})).sort((a,b)=> b.value - a.value || a.partidos - b.partidos);
+  // 1) Goles Totales (histórico)
+  const golesTotales = Object.entries(metricasHistoric).map(([j,m])=>({jugador:j,value: (m.goles||0), partidos:(m.partidos||0)})).sort((a,b)=> b.value - a.value || b.partidos - a.partidos);
+
+  // Autogoles (histórico) — suma de autogoles por jugador
+  const autogolesList = Object.entries(metricasHistoric).map(([j,m])=>({jugador:j,value: (m.autogoles||0), partidos:(m.partidos||0)})).sort((a,b)=> b.value - a.value || a.partidos - b.partidos);
+
+  // 2) Máx goles en un partido (una fila por partido: jugador + fecha)
+  // Esto permite que un mismo jugador aparezca varias veces si tuvo múltiples partidos con muchos goles.
+  const maxGolesList = [];
+  if (idxGoles >= 0) {
+  rows.forEach((cols, idxRow) => {
+      const j = cols[idxJugador];
+      if (!j) return;
+      let g = Number(cols[idxGoles]); if (isNaN(g)) g = 0;
+      const fecha = cols[window.idxFecha];
+      const time = parseFechaToTime(fecha);
+      // Solo registrar partidos donde el jugador anotó >= 4 goles (umbral pedido)
+      if (g >= 4) {
+        maxGolesList.push({ jugador: j, value: g, date: fecha, __time: time, __origIdx: idxRow, partidos: (metricasHistoric[j]&&metricasHistoric[j].partidos)||0 });
+      }
+    });
+    // Orden: goles desc, luego fecha asc (para preferir apariciones más tempranas), luego nombre
+    maxGolesList.sort((a,b)=> {
+      if (b.value !== a.value) return b.value - a.value;
+      const ta = a.__time || 0, tb = b.__time || 0;
+      if (ta !== tb) return ta - tb;
+      return String(a.jugador).localeCompare(String(b.jugador));
+    });
+  }
+
+  // 3) Partidos Jugados
+  const partidosJugados = Object.entries(metricasHistoric).map(([j,m])=>({jugador:j,value: (m.partidos||0)})).sort((a,b)=> b.value - a.value);
+
+  // 4) Victorias Totales
+  const victoriasTotales = Object.entries(metricasHistoric).map(([j,m])=>({jugador:j,value: (m.ganados||0), partidos:m.partidos||0})).sort((a,b)=> b.value - a.value || b.partidos - a.partidos);
+
+  // 5) Racha máxima de victorias (consecutivas)
+  // Helper: formato DD/MM/YY (e.g., 07/09/25)
+  function formatDateDDMMYY(timeOrStr) {
+    if (typeof timeOrStr === 'number' && !isNaN(timeOrStr)) {
+      const d = new Date(timeOrStr);
+      const dd = String(d.getUTCDate()).padStart(2,'0');
+      const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+      const yy = String(d.getUTCFullYear()).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    }
+    // Si viene string, intentar parsear primero
+    const t = parseFechaToTime(String(timeOrStr));
+    if (!isNaN(t)) return formatDateDDMMYY(t);
+    // Fallback: intentar formatear desde string corta (DD/MM/YYYY o similar)
+    const s = String(timeOrStr||'').trim();
+    // extraer dígitos y crear una representación compacta
+    const m = s.match(/(\d{1,2})\D(\d{1,2})\D(\d{2,4})$/);
+    if (m) {
+      const dd = String(Number(m[1])).padStart(2,'0');
+      const mm = String(Number(m[2])).padStart(2,'0');
+      const yy = String(m[3]).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    }
+    return s;
+  }
+  // Nueva: calcular todas las rachas (victorias/derrotas) por jugador
+  function calcularRachas(dataRows, targetPts = 3) {
+    const partidosPorJugador = {};
+    dataRows.forEach((cols, idxRow)=>{
+      const j = cols[idxJugador];
+      const fecha = cols[window.idxFecha];
+      const ptsRaw = idxPuntos>=0 ? Number(cols[idxPuntos]) : NaN;
+      if (![0,1,3].includes(ptsRaw)) return;
+      const pts = ptsRaw;
+      if (!partidosPorJugador[j]) partidosPorJugador[j] = {};
+      const time = parseFechaToTime(fecha);
+      const key = (!isNaN(time)) ? String(time) : String(fecha).trim();
+      if (!partidosPorJugador[j][key]) {
+        partidosPorJugador[j][key] = {fecha: fecha, pts: pts, __origIdx: idxRow, __time: time};
+      } else {
+        const cur = partidosPorJugador[j][key];
+        if (Number(pts) > Number(cur.pts)) {
+          partidosPorJugador[j][key] = {fecha: fecha, pts: pts, __origIdx: Math.min(cur.__origIdx, idxRow), __time: time || cur.__time};
+        } else {
+          cur.__origIdx = Math.min(cur.__origIdx, idxRow);
+        }
+      }
+    });
+
+    const todasRachas = {};
+    Object.entries(partidosPorJugador).forEach(([j,byKey])=>{
+      const arr = Object.values(byKey);
+      arr.sort((a,b)=>{
+        const ta = a.__time; const tb = b.__time;
+        const aIsNum = typeof ta === 'number' && !isNaN(ta);
+        const bIsNum = typeof tb === 'number' && !isNaN(tb);
+        if (aIsNum && bIsNum) { if (ta!==tb) return ta-tb; return a.__origIdx - b.__origIdx; }
+        if (aIsNum) return -1; if (bIsNum) return 1; return a.__origIdx - b.__origIdx;
+      });
+      const rachas = [];
+      let curLen = 0; let curStartTime = null; let curStartRaw = null;
+      let lastEndTime = null; let lastEndRaw = null;
+      arr.forEach(r=>{
+        if (Number(r.pts) === targetPts) {
+          if (curLen === 0) { curStartTime = r.__time; curStartRaw = r.fecha; }
+          curLen += 1;
+          lastEndTime = r.__time; lastEndRaw = r.fecha;
+        } else {
+          if (curLen > 0) {
+            rachas.push({ length: curLen, startTime: curStartTime, endTime: lastEndTime, start: curStartTime && !isNaN(curStartTime)? formatDateDDMMYY(curStartTime): formatDateDDMMYY(curStartRaw), end: lastEndTime && !isNaN(lastEndTime)? formatDateDDMMYY(lastEndTime): formatDateDDMMYY(lastEndRaw) });
+          }
+          curLen = 0; curStartTime = null; curStartRaw = null; lastEndTime = null; lastEndRaw = null;
+        }
+      });
+      if (curLen > 0) {
+        rachas.push({ length: curLen, startTime: curStartTime, endTime: lastEndTime, start: curStartTime && !isNaN(curStartTime)? formatDateDDMMYY(curStartTime): formatDateDDMMYY(curStartRaw), end: lastEndTime && !isNaN(lastEndTime)? formatDateDDMMYY(lastEndTime): formatDateDDMMYY(lastEndRaw) });
+      }
+      todasRachas[j] = rachas;
+    });
+    return todasRachas;
+  }
+  // Debug helper: mostrar todas las rachas calculadas para un jugador
+  window.debugRachaJugador = function(jugadorName) {
+    const byKey = {};
+  rows.forEach((cols, idxRow)=>{
+      const j = cols[idxJugador];
+      if (j !== jugadorName) return;
+      const fecha = cols[window.idxFecha];
+      const pts = idxPuntos>=0 ? Number(cols[idxPuntos]) : NaN;
+      const time = parseFechaToTime(fecha);
+      const key = (!isNaN(time)) ? String(time) : String(fecha).trim();
+      if (!byKey[key]) byKey[key] = {fecha: fecha, pts: pts, __origIdx: idxRow, __time: time};
+      else {
+        const cur = byKey[key];
+        if (Number(cur.pts) !== 3 && Number(pts) === 3) {
+          byKey[key] = {fecha: fecha, pts: pts, __origIdx: Math.min(cur.__origIdx, idxRow), __time: time || cur.__time};
+        } else { cur.__origIdx = Math.min(cur.__origIdx, idxRow); }
+      }
+    });
+    const arr = Object.values(byKey);
+    arr.sort((a,b)=>{
+      const ta = a.__time; const tb = b.__time;
+      const aIsNum = typeof ta === 'number' && !isNaN(ta);
+      const bIsNum = typeof tb === 'number' && !isNaN(tb);
+      if (aIsNum && bIsNum) { if (ta!==tb) return ta-tb; return a.__origIdx - b.__origIdx; }
+      if (aIsNum) return -1; if (bIsNum) return 1; return a.__origIdx - b.__origIdx;
+    });
+    console.group(`Racha debug: ${jugadorName}`);
+    console.table(arr.map(it=>({fecha: it.fecha, parsed: isNaN(it.__time)? 'NaN': formatDateDDMMYY(it.__time), pts: it.pts, origIdx: it.__origIdx})));
+    // calcular rachas (victorias) sobre arr y mostrarlas
+    const streaks = [];
+    let cur=0, startTime=null, startRaw=null, lastEndTime=null, lastEndRaw=null;
+    arr.forEach(r=>{
+      if (Number(r.pts)===3) {
+        if (cur===0) { startTime = r.__time; startRaw = r.fecha; }
+        cur++; lastEndTime = r.__time; lastEndRaw = r.fecha;
+      } else {
+        if (cur>0) {
+          streaks.push({length: cur, start: startTime && !isNaN(startTime)? formatDateDDMMYY(startTime): formatDateDDMMYY(startRaw), end: lastEndTime && !isNaN(lastEndTime)? formatDateDDMMYY(lastEndTime): formatDateDDMMYY(lastEndRaw)});
+        }
+        cur=0; startTime=null; startRaw=null; lastEndTime=null; lastEndRaw=null;
+      }
+    });
+    if (cur>0) {
+      streaks.push({length: cur, start: startTime && !isNaN(startTime)? formatDateDDMMYY(startTime): formatDateDDMMYY(startRaw), end: lastEndTime && !isNaN(lastEndTime)? formatDateDDMMYY(lastEndTime): formatDateDDMMYY(lastEndRaw)});
+    }
+    console.table(streaks);
+    const max = streaks.length ? Math.max(...streaks.map(s=>s.length)) : 0;
+    console.log('Racha maxima calculada:', max);
+    console.groupEnd();
+    return {arr, streaks, max};
+  };
+
+  // Generar listas planas: múltiples entradas por jugador (cada racha es una fila)
+  const minRachaLength = 3; // mostrar solo rachas de al menos N partidos
+  const rachasMap = calcularRachas(allRows, 3);
+  const rachasList = [];
+  Object.entries(rachasMap).forEach(([j, arr])=>{
+    (arr||[]).forEach(s=>{
+      if ((s.length||s.length===0) && s.length >= minRachaLength) {
+        rachasList.push({jugador: j, value: s.length, start: s.start, end: s.end, partidos: (metricasHistoric[j]&&metricasHistoric[j].partidos)||0, __startTime: s.startTime||null});
+      }
+    });
+  });
+  rachasList.sort((a,b)=> b.value - a.value || (a.__startTime||0) - (b.__startTime||0));
+
+  const rachasMapDerrotas = calcularRachas(allRows, 0);
+  const rachasListDerrotas = [];
+  Object.entries(rachasMapDerrotas).forEach(([j, arr])=>{
+    (arr||[]).forEach(s=>{
+      if ((s.length||s.length===0) && s.length >= minRachaLength) {
+        rachasListDerrotas.push({jugador: j, value: s.length, start: s.start, end: s.end, partidos: (metricasHistoric[j]&&metricasHistoric[j].partidos)||0, __startTime: s.startTime||null});
+      }
+    });
+  });
+  rachasListDerrotas.sort((a,b)=> b.value - a.value || (a.__startTime||0) - (b.__startTime||0));
+
+  // Máx goles en temporada (histórico): calcular por (jugador, año) usando todos los datos originales
+  const seasonGoalsMap = {}; // key: `${year}__${jugador}` -> { jugador, year, goals, partidos }
+  try {
+    const allRows = window.dataRowsOriginal || [];
+  rows.forEach((cols, idxRow) => {
+      const j = cols[window.idxJugador];
+      if (!j) return;
+      const fecha = cols[window.idxFecha];
+      const time = parseFechaToTime(fecha);
+      let year = null;
+      if (!isNaN(time)) year = new Date(time).getUTCFullYear();
+      else {
+        // intentar extraer año de la cadena si no parsea
+        const m = String(fecha||'').trim().match(/(\d{4})$/);
+        if (m) year = Number(m[1]);
+      }
+      if (!year) return;
+      const goles = (typeof window.idxGoles === 'number' && window.idxGoles>=0) ? Number(cols[window.idxGoles]) : 0;
+      if (isNaN(goles)) return;
+      const key = `${year}__${j}`;
+      if (!seasonGoalsMap[key]) seasonGoalsMap[key] = {jugador: j, year: year, goals: 0, partidos: 0};
+      seasonGoalsMap[key].goals += goles;
+      seasonGoalsMap[key].partidos += 1;
+    });
+  } catch(e) { console.warn('Error calculando seasonGoalsMap', e); }
+  const seasonGoalsList = Object.values(seasonGoalsMap).map(s=>({jugador: s.jugador, year: s.year, value: s.goals, partidos: s.partidos})).sort((a,b)=> b.value - a.value || b.partidos - a.partidos);
+
+  const records = [
+    {id:'partidos_jugados', title:'Partidos Jugados', description:'Cantidad de partidos jugados', list: partidosJugados},
+    {id:'victorias_totales', title:'Victorias Totales', description:'Cantidad de partidos ganados', list: victoriasTotales},
+    {id:'racha_victorias', title:'Racha Máxima de Victorias', description:'Máxima secuencia de victorias consecutivas', list: rachasList},
+    {id:'racha_derrotas', title:'Racha Máxima de Derrotas', description:'Máxima secuencia de derrotas consecutivas', list: rachasListDerrotas},
+    {id:'goles_total', title:'Goles Totales', description:'Suma de goles a favor por jugador', list: golesTotales},
+    {id:'autogoles', title:'Autogoles', description:'Suma de autogoles cometidos por jugador', list: autogolesList},
+    {id:'max_goles_temporada', title:'Máx Goles en Temporada', description:'Máximo de goles en una temporada (histórico por jugador + año)', list: seasonGoalsList},
+    {id:'max_goles_partido', title:'Máx Goles en un Partido', description:'Mayor cantidad de goles en un solo partido', list: maxGolesList}
+  ];
+
+  // Seleccionar qué records mostrar según la pestaña:
+  // - Histórico: mostrar sólo los records solicitados en este orden
+  // - seasonOnly: mostrar únicamente 'max_goles_temporada'
+  let recordsToRender = [];
+  if (mode === 'seasonOnly') {
+    recordsToRender = records.filter(r => r.id === 'max_goles_temporada');
+  } else {
+    const historicosOrder = ['partidos_jugados', 'victorias_totales', 'racha_victorias', 'racha_derrotas', 'goles_total', 'autogoles', 'max_goles_partido'];
+    recordsToRender = historicosOrder.map(id => records.find(r => r.id === id)).filter(Boolean);
+  }
+
+  // Render (use recordsToRender so we only output the records for the selected mode)
+  let html = '';
+  html += `<div style="display:flex;flex-direction:column;gap:0.9em;">`;
+  recordsToRender.forEach(rec=>{
+    html += `<div class="record-row" style="display:flex;align-items:center;justify-content:space-between;background:#14151b;padding:0.8em;border-radius:8px;border:1px solid #222;">`;
+    // meta container (title) centered
+    html += `<div class="record-meta" style="display:flex;align-items:center;justify-content:center;gap:0.6em;min-width:180px;text-align:center;">`;
+    html += `<div class="record-title" style="width:100%;text-align:center;font-weight:700;color:#ffd700;">${rec.title}</div>`;
+    html += `</div>`;
+    // Top 3
+  // contenedor de jugadores con clase para estilos responsivos
+  html += `<div class="record-players" style="display:flex;gap:0.6em;align-items:center;">`;
+  // Aplicar filtro de partidos mínimos antes de mostrar top
+  const minPartidosForRecords = 5; // umbral solicitado
+  const filtered = rec.list.filter(item => {
+    const meetsPJ = ((metricasHistoric[item.jugador] && metricasHistoric[item.jugador].partidos) || 0) >= minPartidosForRecords;
+    const hasValue = (typeof item.value === 'undefined') ? true : (Number(item.value) > 0);
+    return meetsPJ && hasValue;
+  });
+  if (filtered.length === 0) {
+    html += `<div style="color:#b0b0b0;margin-right:1em;">—</div>`;
+  } else {
+    // Asegurar orden consistente: por value desc, luego year desc, luego nombre
+    filtered.sort((a,b)=> {
+      const va = Number(a.value || 0), vb = Number(b.value || 0);
+      if (vb !== va) return vb - va;
+      const ya = a.year || 0, yb = b.year || 0;
+      if (yb !== ya) return yb - ya;
+      return String(a.jugador).localeCompare(String(b.jugador));
+    });
+    // Agrupar por valor (empates) — cada grupo representará un puesto
+    const groups = [];
+    filtered.forEach(it => {
+      if (groups.length === 0 || groups[groups.length - 1].value !== it.value) {
+        groups.push({ value: it.value, items: [it] });
+      } else {
+        groups[groups.length - 1].items.push(it);
+      }
+    });
+    // Renderizar grupos respetando empates, pero mostrar como máximo 3 tarjetas en total.
+    // Si un grupo empatado tiene más jugadores que el espacio restante, mostramos solo los primeros hasta completar las 3 tarjetas.
+    let ranksShown = 0;
+    let rank = 1;
+    let tilesShown = 0; // contador global de tarjetas mostradas
+    for (let gi = 0; gi < groups.length && tilesShown < 3; gi++) {
+      const g = groups[gi];
+      const placeClass = rank === 1 ? 'place-1' : (rank === 2 ? 'place-2' : (rank === 3 ? 'place-3' : ''));
+      let anyFromGroup = false;
+      for (let pi = 0; pi < g.items.length && tilesShown < 3; pi++) {
+        const item = g.items[pi];
+        anyFromGroup = true;
+        const yearBadge = item.year ? `<div style="font-size:0.85em;color:#9ea5ad;">${item.year}</div>` : '';
+        const dateRange = (item.start && item.end) ? `<div style="font-size:0.8em;color:#9ea5ad;">${item.start} → ${item.end}</div>` : '';
+        const singleDate = (item.date) ? `<div style="font-size:0.8em;color:#9ea5ad;">${formatDateDDMMYY(item.date)}</div>` : '';
+        html += `<div class="player-tile ${placeClass}" style="min-width:180px;box-sizing:border-box;">`;
+        html += avatarFor(item.jugador);
+        html += `<div style="text-align:left;min-width:140px;"><div style="font-weight:700;color:#fff;">${item.jugador}</div><div style="font-size:0.85em;color:#9ea5ad;"><span class=\"record-value\">${item.value}</span>${yearBadge}${dateRange}${singleDate}</div></div>`;
+        html += `</div>`;
+        tilesShown += 1;
+      }
+      if (anyFromGroup) {
+        ranksShown += 1;
+        rank += 1;
+      }
+    }
+  }
+    html += `</div>`;
+    html += `<div style="margin-left:12px;"><button class="btn-record-detalle" data-rec="${rec.id}" style="background:#23263a;color:#ffd700;border:1px solid #333;padding:0.4em 0.7em;border-radius:8px;cursor:pointer;">Ver detalle</button></div>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  container.innerHTML = html;
+
+  // Copiar el contenido al contenedor visible según el modo solicitado
+  try {
+    if (mode === 'seasonOnly') {
+      const tempCont = document.getElementById('recordsTemporadaContainer');
+      if (tempCont) {
+        tempCont.innerHTML = container.innerHTML;
+      }
+    } else {
+      const histCont = document.getElementById('recordsHistoricos');
+      if (histCont) {
+        histCont.innerHTML = container.innerHTML;
+      }
+    }
+  } catch (_) {}
+
+  // Helper: attach handlers to any container that contains .btn-record-detalle
+  function attachRecordDetailHandlers(root) {
+    if (!root) return;
+    root.querySelectorAll('.btn-record-detalle').forEach(btn=>{
+      btn.onclick = function(){
+        const recId = this.getAttribute('data-rec');
+        const rec = records.find(r=>r.id===recId);
+        if (!rec) return;
+        // Aplicar mismo filtro de partidos mínimos en la vista detalle
+        const minPartidosForRecords = 5;
+        // Filtrar todos los items que cumplen el mínimo de partidos y tienen valor significativo
+        const filteredList = rec.list.filter(item => {
+          const meetsPJ = ((metricasHistoric[item.jugador] && metricasHistoric[item.jugador].partidos) || 0) >= minPartidosForRecords;
+          const hasValue = (typeof item.value === 'undefined') ? true : (Number(item.value) > 0);
+          return meetsPJ && hasValue;
+        });
+        // Orden consistente: por value desc, luego por year desc si aplica, luego por nombre
+        filteredList.sort((a,b)=>{
+          const va = Number(a.value||0), vb = Number(b.value||0);
+          if (vb !== va) return vb - va;
+          const ya = a.year || 0, yb = b.year || 0;
+          if (yb !== ya) return yb - ya;
+          return String(a.jugador).localeCompare(String(b.jugador));
+        });
+        // Agrupar por valor (cada grupo será una posición única). Luego tomamos las primeras 5 posiciones.
+        const groupsAll = [];
+        filteredList.forEach(it => {
+          if (groupsAll.length === 0 || groupsAll[groupsAll.length - 1].value !== it.value) {
+            groupsAll.push({ value: it.value, items: [it] });
+          } else {
+            groupsAll[groupsAll.length - 1].items.push(it);
+          }
+        });
+        const listGroupsToShow = groupsAll.slice(0,5); // mostrar hasta 5 posiciones únicas
+        const content = document.getElementById('recordModalContent');
+        // Centrar título y descripción en el header del modal (botón Cerrar a la derecha)
+        let h = `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6em;">` +
+                  `<div style="flex:1;text-align:center;">` +
+                    `<h2 style="margin:0;color:#ffd700;text-align:center;">${rec.title}</h2>` +
+                    `<div style="color:#9ea5ad;text-align:center;">${rec.description}</div>` +
+                  `</div>` +
+                  `<div style="margin-left:12px;">` +
+                    `<button id="closeRecordModal" style="background:#23263a;color:#ffd700;border:1px solid #333;padding:0.35em 0.6em;border-radius:8px;cursor:pointer;">Cerrar</button>` +
+                  `</div>` +
+                `</div>`;
+        h += `<div style="display:flex;flex-direction:column;gap:0.6em;padding-right:6px;">`;
+        // Renderizar las primeras 5 posiciones (grupos), cada grupo puede contener varios jugadores empates
+        listGroupsToShow.forEach((g, groupIdx) => {
+          const rank = groupIdx + 1;
+          const playersHtml = g.items.map(pi => {
+            const dateHtml = (pi.start && pi.end) ? `${pi.start} → ${pi.end}` : (pi.date ? formatDateDDMMYY(pi.date) : '');
+            return `<div style="display:flex;align-items:center;gap:0.5em;margin-right:12px;">${avatarFor(pi.jugador)}<div><div style="font-weight:700;color:#fff;">${pi.jugador}</div><div style="font-size:0.85em;color:#9ea5ad;">${dateHtml}</div></div></div>`;
+          }).join('');
+          const yearBadge = g.items[0] && g.items[0].year ? `<div style="font-size:0.85em;color:#9ea5ad;">${g.items[0].year}</div>` : '';
+          h += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5em;border-bottom:1px solid #111;">`;
+          h += `<div style="display:flex;align-items:center;gap:0.8em;"><div style="font-weight:700;color:#fff;min-width:36px;text-align:left;">${rank}.</div><div style="display:flex;align-items:center;">${playersHtml}</div></div>`;
+          h += `<div style="font-weight:800;color:#ffd700;font-size:1.05em;">${g.value} ${yearBadge}</div>`;
+          h += `</div>`;
+        });
+        h += `</div>`;
+        if (content) content.innerHTML = h;
+        const closeBtn = document.getElementById('closeRecordModal');
+        if (closeBtn) closeBtn.onclick = function(){ closeRecordModal(); };
+        // abrir modal con animación y blur
+        openRecordModal();
+      };
+    });
+  }
+
+  // Modal (crear si no existe)
+  let modal = document.getElementById('recordModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'recordModal';
+    modal.style.position = 'fixed';
+    modal.style.left = '0'; modal.style.top = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+    modal.style.display = 'none'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center';
+    modal.style.background = 'rgba(0,0,0,0.6)'; modal.style.zIndex = 9999;
+    modal.innerHTML = `<div id="recordModalContent" style="max-width:820px;width:90%;background:#0f1114;padding:1em;border-radius:10px;border:1px solid #222;color:#fff;"></div>`;
+  modal.onclick = function(e){ if (e.target === modal) { closeRecordModal(); } };
+  document.body.appendChild(modal);
+  }
+
+  // Modal helper functions (deben existir antes de asignar handlers a los botones)
+  function escHandler(e) {
+    if (e.key === 'Escape' || e.key === 'Esc') closeRecordModal();
+  }
+  function openRecordModal() {
+    const modalEl = document.getElementById('recordModal');
+    const content = document.getElementById('recordModalContent');
+    if (!modalEl || !content) return;
+    modalEl.style.display = 'flex';
+    requestAnimationFrame(()=>{
+      modalEl.classList.add('show');
+      content.classList.remove('modal-close');
+      content.classList.add('modal-open');
+    });
+    document.body.classList.add('modal-blur');
+    document.addEventListener('keydown', escHandler);
+  }
+  function closeRecordModal() {
+    const modalEl = document.getElementById('recordModal');
+    const content = document.getElementById('recordModalContent');
+    if (!modalEl || !content) return;
+    modalEl.classList.remove('show');
+    content.classList.remove('modal-open');
+    content.classList.add('modal-close');
+    document.body.classList.remove('modal-blur');
+    document.removeEventListener('keydown', escHandler);
+    setTimeout(()=>{ try{ modalEl.style.display='none'; }catch(_){} }, 260);
+  }
+
+  // Detalle button handlers
+  // Attach handlers also to the main container and to the visible copies (if present)
+  try { attachRecordDetailHandlers(container); } catch(_) {}
+  try { attachRecordDetailHandlers(document.getElementById('recordsHistoricos')); } catch(_) {}
+  try { attachRecordDetailHandlers(document.getElementById('recordsTemporadaContainer')); } catch(_) {}
+  // finalize window.renderRecords
+  };
+
+// Nuevo: render para la vista histórica y por temporada (usa window.renderRecordsInterno)
+window.renderRecordsInterno = function(mode, year) {
+  // mode: 'historico' | 'temporada'
+  // Para compatibilidad con la implementación existente, renderRecords mostrará "histórico" por defecto
+  const historicoCont = document.getElementById('recordsHistoricos');
+  const temporadaCont = document.getElementById('recordsTemporadaContainer');
+  if (!historicoCont || !temporadaCont) return;
+  // Guardar contenedor original temporalmente
+  if (mode === 'historico') {
+    // Mantener comportamiento original: renderizar en el contenedor histórico
+    // Simular que container es recordsHistoricos y reutilizar renderRecords core pero sin duplicar lógica
+    // Para simplicidad, llamamos a la función existente que renderiza en #recordsContainer y luego movemos su HTML.
+    try {
+      // renderRecords pinta en #recordsContainer; llamamos y luego copiamos
+      window.renderRecords();
+      const main = document.getElementById('recordsContainer');
+      if (main) historicoCont.innerHTML = main.innerHTML;
+    } catch (e) {
+      // Fallback simple
+      historicoCont.innerHTML = '<div style="color:#b0b0b0;">No se pudo renderizar récords históricos.</div>';
+    }
+  } else if (mode === 'temporada') {
+    // Filtrar por año y renderizar una versión simplificada de records por temporada
+    const rows = window.dataRowsOriginal || [];
+    const idxJ = window.idxJugador;
+    const idxG = typeof window.idxGoles === 'number' ? window.idxGoles : -1;
+    const idxP = typeof window.idxPuntos === 'number' ? window.idxPuntos : -1;
+    function parseYearFromFecha(f) {
+      if (!f) return null;
+      const s = String(f).trim();
+      if (s.includes('-')) return s.split('-')[0];
+      if (s.includes('/')) return s.split('/').pop();
+      const m = s.match(/(\d{4})$/);
+      return m ? m[1] : null;
+    }
+    const filtered = rows.filter(r => parseYearFromFecha(r[window.idxFecha]) === String(year));
+    // Build metrics per player for that season
+    const m = {};
+    filtered.forEach(cols => {
+      const j = cols[idxJ]; if (!j) return;
+      if (!m[j]) m[j] = {goles:0, partidos:0, ganados:0};
+      const g = idxG>=0 ? Number(cols[idxG]) : 0;
+      const p = idxP>=0 ? Number(cols[idxP]) : NaN;
+      if (!isNaN(g)) m[j].goles += g;
+      m[j].partidos += 1;
+      if (p === 3) m[j].ganados += 1;
+    });
+    const list = Object.entries(m).map(([j,dat])=>({jugador:j,value:dat.goles,partidos:dat.partidos,ganados:dat.ganados})).sort((a,b)=> b.value - a.value || b.partidos - a.partidos);
+    // Render using similar markup a la sección principal: top 3
+    let out = '<div style="display:flex;flex-direction:column;gap:0.9em;">';
+    const minPJ = 3;
+    const filteredList = list.filter(it => it.partidos >= minPJ && it.value > 0);
+    if (filteredList.length === 0) {
+      out += '<div style="color:#b0b0b0;">No hay datos para la temporada seleccionada o ningún jugador cumple el mínimo de partidos.</div>';
+    } else {
+      out += '<div style="display:flex;gap:0.6em;flex-wrap:wrap;justify-content:center;">';
+      for (let i=0;i<Math.min(6, filteredList.length); i++) {
+        const it = filteredList[i];
+        const src = `img/jugadores/jugador-${normalizarNombreArchivo(it.jugador)}.png`;
+        out += `<div class="player-tile" style="min-width:160px;">
+                  <img class="avatar-img" src="${src}" onerror="this.src='img/jugadores/jugador-vacio.png'" style="margin-right:8px;width:44px;height:44px;">
+                  <div style="text-align:left;"><div style="font-weight:700;color:#fff;">${it.jugador}</div><div style="font-size:0.9em;color:#9ea5ad;">${it.value} goles · ${it.partidos} PJ</div></div>
+                </div>`;
+      }
+      out += '</div>';
+    }
+    out += '</div>';
+    temporadaCont.innerHTML = out;
+  }
+};
+
+// Hook para inicializar los controles de la pestaña Récords
+document.addEventListener('DOMContentLoaded', function() {
+  const btnHist = document.getElementById('recordsTabHistoricosBtn');
+  const btnTemp = document.getElementById('recordsTabTemporadaBtn');
+  const contHist = document.getElementById('recordsHistoricos');
+  const contTemp = document.getElementById('recordsPorTemporada');
+  if (btnHist && btnTemp && contHist && contTemp) {
+    btnHist.onclick = function(){ btnHist.classList.add('active'); btnTemp.classList.remove('active'); contHist.style.display='block'; contTemp.style.display='none'; window.renderRecords(); };
+    btnTemp.onclick = function(){ btnTemp.classList.add('active'); btnHist.classList.remove('active'); contTemp.style.display='block'; contHist.style.display='none'; window.renderRecords(undefined, 'seasonOnly'); };
+  }
+});
