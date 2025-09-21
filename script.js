@@ -5067,7 +5067,7 @@ window.renderRecordsInterno = function(mode, year) {
   }
 };
 
-// Hook para inicializar los controles de la pestaña Récords
+// Hook para inicializar los controles de la pestaña Récords Te imaginas?
 document.addEventListener('DOMContentLoaded', function() {
   const btnHist = document.getElementById('recordsTabHistoricosBtn');
   const btnTemp = document.getElementById('recordsTabTemporadaBtn');
